@@ -56,7 +56,8 @@ h4{margin:10px 0 5px;color:var(--red);font-size:11.5px;letter-spacing:.3px}h4 sm
 #map{width:100%;height:300px;flex:none;border:1px solid #11181b;border-radius:6px}#keys{width:100%;height:110px;flex:none;border-radius:6px}
 #right section{background:linear-gradient(#0f1416,#0a0e10);border:1px solid #182126;border-radius:7px;padding:8px;margin-bottom:8px}
 #right h3{margin:0 0 7px;font-size:12.5px;color:var(--acc);text-shadow:0 0 6px rgba(57,255,106,.35)}
-.vlist{display:flex;flex-direction:column;gap:3px;max-height:250px;overflow:auto;margin-bottom:6px}
+.vgrp{color:var(--acc);font-weight:800;font-size:10.5px;margin:4px 0 2px}.vgrp.dim{color:var(--dim);margin-top:8px}
+.vlist{display:flex;flex-direction:column;gap:3px;max-height:330px;overflow:auto;margin-bottom:6px}
 .vopt{padding:5px 7px;border:1px solid #182126;border-radius:5px;cursor:pointer;background:#090d0f}.vopt b{display:block;font-size:11.5px}.vopt span{display:block;color:var(--dim);font-size:10.5px;line-height:1.35}
 .vopt:hover{border-color:#34444b}.vopt.on{border-color:var(--acc);background:#0d2014}.vopt.on b{color:var(--acc)}
 .frow{display:grid;grid-template-columns:96px 1fr auto;align-items:center;gap:6px;margin:4px 0}.frow span{color:var(--dim);font-size:11px}.frow b{color:var(--acc);font-size:11px;min-width:44px;text-align:right;font-family:Consolas,monospace}
@@ -370,133 +371,114 @@ function suggestNext(slot, mode){
   return list.sort((a,b)=>b.n-a.n).slice(0,8).map(x=>({r:x.r,q:x.q==='maj'?'maj':x.q==='min'?'min':'dim',p:x.n/tot}));
 }
 
-/* ---------- 프로 보이싱 엔진 ---------- */
-/* LH(왼손) = 베이스 앵커, RH(오른손) = 상단 구조. 모든 스타일은 실제 프로그레시브 하우스 프로듀서들이 쓰는 넓은 배치를 기준으로 함 */
+/* ---------- 프로 보이싱 엔진 (v2) ----------
+   원칙: ① 오른손은 C4~C5 근처의 클로즈 보이싱(인접 음 간격 ≤ 1옥타브)
+         ② 공통음은 유지하고 나머지 음은 가장 가까운 음으로 이동 (보이스 리딩)
+         ③ 베이스(왼손)는 루트 옥타브로, 가능한 한 제자리 또는 순차 진행
+         ④ 넓이는 오른손을 벌리는 대신 왼손 옥타브 + 탑노트 옥타브 더블로 만든다 */
 const VOICINGS = {
-  proWide:{ko:'프로 와이드 (추천)',desc:'왼손 루트+옥타브, 오른손은 3·5·7·9를 넓게 펼친 4성. 3옥타브 이상 퍼지는 가장 표준적인 프로 브레이크다운 피아노/패드 보이싱.',
-    lh:[0,12], rh:c=>colorTones(c,{nine:true,seven:true,drop:'root'}), range:[58,86], span:[12,22], open:true},
-  emotional:{ko:'감성 add9 오픈 5도',desc:'루트-5도-9도의 열린 5도 스택 위에 3도를 한 옥타브 올려 얹는 보이싱. 멜로딕 프로그레시브 하우스 특유의 몽환적이고 애절한 울림.',
-    lh:[0,7], rh:c=>uniq([2,third(c),7,c.iv.includes(10)?10:null]), range:[60,86], span:[12,24], open:true},
-  anthem:{ko:'앤썸 슈퍼소우 스택',desc:'루트·5도·옥타브의 단단한 하단 + 상단은 3화음을 옥타브 더블. 페스티벌 드롭의 슈퍼소우 코드 스탭에 최적 — 두껍고 넓고 탑노트가 선명.',
-    lh:[0,7,12], rh:c=>uniq([third(c),7,0]), range:[64,88], span:[7,14], open:false, topDouble:true},
-  pianoBreak:{ko:'피아노 브레이크다운 (양손)',desc:'왼손 옥타브 + 오른손 1-3-5-9 클로즈/오픈 혼합. 실제 피아니스트의 양손 배치. 탑노트를 멜로디처럼 부드럽게 이어 줌.',
-    lh:[0,12], rh:c=>colorTones(c,{nine:true,seven:false}), range:[60,84], span:[7,15], open:false},
-  tenth:{ko:'10도 스프레드',desc:'왼손 루트+10도(3도 위 옥타브), 오른손은 5·7·9. 넓고 고급스러운 울림으로 하우스 피아노와 딥 프로그에 자주 쓰임.',
-    lh:[0,third0], rh:c=>uniq([7,c.iv.includes(10)?10:c.iv.includes(11)?11:12,2]), range:[62,86], span:[7,16], open:true},
-  drop2:{ko:'드롭2 (재즈/하우스 키즈)',desc:'4성 클로즈 보이싱의 위에서 두 번째 음을 한 옥타브 내림. 부드럽고 세련된 하우스 키즈·오르간 코드.',
-    lh:[0], rh:c=>colorTones(c,{nine:false,seven:true}), range:[55,80], span:[10,17], open:true, drop:2},
-  drop3:{ko:'드롭3 (와이드 키즈)',desc:'위에서 세 번째 음을 한 옥타브 내림. 드롭2보다 더 넓게 열린 소리.',
-    lh:[0], rh:c=>colorTones(c,{nine:false,seven:true}), range:[52,80], span:[14,22], open:true, drop:3},
-  shell:{ko:'쉘 + 텐션',desc:'왼손 1-3-7(쉘), 오른손 9-5 텐션. 군더더기 없이 고급스러운 소리. 딥/멜로딕 하우스 패드.',
-    lh:[0,third0,seventh0], rh:c=>uniq([2,7]), range:[64,84], span:[3,12], open:true},
-  fifths:{ko:'스택 5도 (시네마틱)',desc:'1-5-9-3(+옥타브) 5도 위주로 쌓아 거대하고 웅장한 공간감. 인트로 패드, 시네마틱 브레이크다운.',
-    lh:[0,7], rh:c=>uniq([2,9===0?null:third(c),7]), range:[62,90], span:[12,26], open:true},
-  power:{ko:'파워 와이드 (빅룸)',desc:'1-5-8-12-15. 3도 없이 5도만 넓게 — 빅룸·하드한 드롭에 강력. 장/단조 구분이 흐려져 어떤 리드와도 충돌이 적음.',
-    lh:[0,7], rh:c=>[0,7], range:[60,84], span:[7,12], open:false, topDouble:true},
-  quartal:{ko:'4도 쿼탈 (모던)',desc:'5도-루트-9도-3도를 4도 간격 위주로 쌓아 현대적이고 모호한 색채. 프로그레시브 테크·딥 계열에서 신선한 질감.',
-    lh:[0,7], rh:c=>uniq([7,0,5===0?0:2,third(c)]), range:[60,86], span:[10,20], open:true},
-  padHigh:{ko:'하이 패드 (베이스 없음)',desc:'베이스는 베이스 트랙에 맡기고 3·5·7·9를 고음역에 넓게. 믹스에서 서브/미드베이스와 절대 부딪히지 않는 패드·슈퍼소우 백킹.',
-    lh:[], rh:c=>colorTones(c,{nine:true,seven:true,drop:'root'}), range:[64,92], span:[12,24], open:true},
-  close:{ko:'클로즈 (기본/학습용)',desc:'한 옥타브 안에 모은 기본 보이싱 + 루트 베이스. 이론 학습·비교용.',
-    lh:[0], rh:c=>c.iv.map(x=>x%12), range:[57,76], span:[3,11], open:false}
+  standard:{main:1,ko:'프로그레시브 스탠다드 (추천)',desc:'왼손 루트 옥타브 + 오른손 C4~C5 클로즈 3화음, 코드 사이 최소 이동. 가장 자연스럽고 아름다운 기본형 — 피아노·패드·슈퍼소우 어디에나.',lh:'oct',rh:'close'},
+  supersaw:{main:1,ko:'슈퍼소우 드롭 (탑노트 옥타브 더블)',desc:'스탠다드 위에 탑노트를 한 옥타브 위로 더블. 드롭의 슈퍼소우 코드처럼 밝고 넓으면서 화성은 깨끗하게 유지.',lh:'oct',rh:'close',dblTop:true},
+  piano:{main:1,ko:'피아노 브레이크다운 (왼손 1-5-8)',desc:'왼손 루트-5도-옥타브의 열린 배치 + 오른손 클로즈 3화음. 브레이크다운 피아노의 풍성하고 따뜻한 정석.',lh:'r58',rh:'close'},
+  spread:{main:1,ko:'와이드 스프레드 (3옥타브 패드)',desc:'루트-5도-10도-루트-5도처럼 아래는 넓게, 위로 갈수록 좁게(배음 순서). 인접 음 간격이 모두 1옥타브 이하라 넓어도 탁하지 않음. 패드·스트링에 최적.',lh:'none',rh:'spread'},
+  add9:{main:1,ko:'add9 감성 (9도를 탑에)',desc:'스탠다드 보이싱의 탑노트 위에 9도를 얹어 반짝이는 색채를 추가. 근음과 3화음은 그대로라 코드가 흐려지지 않음. 멜로딕 프로그의 감성.',lh:'oct',rh:'close',add9:true},
+  doubleOct:{main:1,ko:'옥타브 더블 클로즈 (양손)',desc:'오른손 클로즈 3화음을 한 옥타브 아래에서 한 번 더 — 두 옥타브에 걸친 두꺼운 블록. 앤썸 코드 스탭.',lh:'root',rh:'close',dblAll:true},
+  sevenths:{ko:'세븐스 키즈 (하우스 피아노)',desc:'딥 하우스·퓨처 베이스 쪽에 더 가까운 보이싱. 트라이어드에 7도를 더해 4성 클로즈로. 딥/하우스 피아노·오르간의 세련된 울림. 디미니시·sus는 그대로.',lh:'oct',rh:'close',seventh:true},
+  power:{ko:'파워 (빅룸, 3도 없음)',desc:'멜로딕 프로그보다는 빅룸 드롭용. 루트-5도-옥타브만 사용. 장단조 구분 없이 단단하고 거대한 빅룸 드롭용.',lh:'oct',rh:'power'},
+  close:{ko:'클로즈 (학습/비교용)',desc:'왼손 루트 단음 + 오른손 클로즈 3화음. 이론 학습과 비교용 기본 형태.',lh:'root',rh:'close'}
 };
 function third(c){ return c.iv.includes(4)?4:c.iv.includes(3)?3:c.iv.includes(5)?5:c.iv.includes(2)?2:7; }
-function third0(c){ return 12+third(c); }
-function seventh0(c){ return 12+(c.iv.includes(10)?10:c.iv.includes(11)?11:c.iv.includes(9)?9:7); }
 function uniq(a){ return [...new Set(a.filter(x=>x!=null).map(x=>pcOf(x)))]; }
-function colorTones(c,o){
-  const iv=c.iv.map(pcOf); const s=new Set(iv);
-  const isDim=iv.includes(6)&&iv.includes(3);
-  if(o.nine&&!isDim&&!s.has(1)) s.add(2);
-  if(o.seven&&!isDim&&!iv.includes(10)&&!iv.includes(11)&&!iv.includes(9)&&iv.length<4){ /* 7th는 원래 있을 때만 */ }
-  if(o.drop==='root'&&s.size>3) s.delete(0);
-  if(s.size>5){ s.delete(7); }
-  return [...s];
-}
-/* 오른손 후보 생성 + 점수 */
-function rhCandidates(pcsRel, root, st, opts){
-  const pcs=pcsRel.map(x=>pcOf(root+x)); const n=pcs.length; if(!n) return [[]];
-  const perms=[]; const permute=(a,l)=>{ if(l===a.length){ perms.push(a.slice()); return; } for(let i=l;i<a.length;i++){ [a[l],a[i]]=[a[i],a[l]]; permute(a,l+1); [a[l],a[i]]=[a[i],a[l]]; } };
-  permute(pcs.slice(),0);
-  const [lo,hi]=[st.range[0]+opts.reg,st.range[1]+opts.reg], out=[];
-  const spanMul=opts.width;
-  for(const pm of perms){
-    const combos=st.open?(1<<(n-1)):1;
-    for(let cb=0;cb<combos;cb++){
-      for(let base=lo-12;base<=lo+12;base++){
-        if(pcOf(base)!==pm[0]) continue;
-        const v=[base]; let ok=true;
-        for(let i=1;i<n;i++){ let x=v[i-1]+1; while(pcOf(x)!==pm[i]) x++; if(cb&(1<<(i-1))) x+=12; v.push(x); }
-        if(v[0]<lo-3||v[n-1]>hi) continue;
-        let vv=v.slice();
-        if(st.drop&&vv.length>=st.drop){ const idx=vv.length-st.drop; vv[idx]-=12; vv.sort((a,b)=>a-b); }
-        if(st.topDouble) vv.push(vv[vv.length-1]-12>=vv[0]?vv[vv.length-1]+12:vv[vv.length-1]+12);
-        const span=vv[vv.length-1]-vv[0];
-        if(span<st.span[0]*spanMul-2||span>st.span[1]*spanMul+3) ok=false;
-        if(ok) out.push(vv);
-      }
-    }
-  }
-  return out;
-}
 function vlDist(a,b){
   if(!a||!b||!a.length||!b.length) return 0;
   const A=[...a].sort((x,y)=>x-y), B=[...b].sort((x,y)=>x-y); let s=0;
   if(A.length===B.length){ for(let i=0;i<A.length;i++) s+=Math.abs(A[i]-B[i]); return s; }
-  for(const x of A){ let m=99; for(const y of B) m=Math.min(m,Math.abs(x-y)); s+=m; } return s*1.15;
+  for(const x of A){ let m=99; for(const y of B) m=Math.min(m,Math.abs(x-y)); s+=m; } return s;
 }
-function roughness(v){
-  let p=0; const s=[...v].sort((a,b)=>a-b);
-  for(let i=1;i<s.length;i++){ const d=s[i]-s[i-1]; const low=s[i-1];
-    if(low<52&&d<7) p+=8; else if(low<60&&d<3) p+=5; if(d===1) p+=(i===s.length-1?10:3); if(d===0) p+=20; }
-  if(s.length>=2&&s[s.length-1]-s[s.length-2]===1) p+=6;
-  return p;
+/* 오른손 코드톤 (pitch class 상대값) */
+function rhTones(c, st){
+  let iv=c.iv.map(pcOf);
+  const has7=c.iv.some(x=>[10,11].includes(pcOf(x))&&x<12);
+  if(st.seventh&&!has7&&!iv.includes(6)&&third(c)!==5&&third(c)!==2&&iv.length===3){ iv.push(third(c)===4?11:10); }
+  // 9·11 같은 확장음이 있는 코드는 3·7·9 중심으로 4음 이내
+  if(iv.length>4){ iv=iv.filter(x=>x!==7); }
+  if(iv.length>4){ iv=iv.slice(0,4); }
+  return [...new Set(iv)];
 }
-/* 진행 전체 보이싱 */
+/* 클로즈 보이싱 후보: 모든 자리바꿈 × 옥타브 */
+function closeCands(root, rel, lo, hi){
+  const pcs=rel.map(x=>pcOf(root+x)), n=pcs.length, out=[];
+  for(let inv=0;inv<n;inv++){
+    const order=pcs.slice(inv).concat(pcs.slice(0,inv));
+    for(let base=lo-12;base<=hi;base++){
+      if(pcOf(base)!==order[0]) continue;
+      const v=[base]; for(let i=1;i<n;i++){ let x=v[i-1]+1; while(pcOf(x)!==order[i]) x++; v.push(x); }
+      if(v[n-1]-v[0]>12) continue;
+      if(v[0]>=lo&&v[n-1]<=hi) out.push({v,inv:(pcs.length-inv)%pcs.length===0?0:inv});
+    }
+  }
+  return out;
+}
 function voiceProgression(slots, key, V){
-  const st=VOICINGS[V.style]||VOICINGS.proWide; let prevRH=null; const out=[];
+  const st=VOICINGS[V.style]||VOICINGS.standard; let prevRH=null, prevBass=null; const out=[];
+  const reg=V.reg||0, lhReg=V.lhReg||0, lead=V.lead==null?1:V.lead;
   slots.forEach((sl,i)=>{
-    const q=QUAL[sl.q]; const root=key.root+sl.r;
-    const c={iv:q.iv};
-    // LH
+    const q=QUAL[sl.q]; const root=key.root+sl.r; const c={iv:q.iv};
+    const oct=(sl.oct||0)*12;
+    // ----- 베이스 (왼손) : 이전 베이스와 가장 가까운 옥타브, 범위 A1(33)~G#2(44) 기준 -----
+    const bassPc=pcOf(root+(sl.bass!=null?sl.bass-sl.r:0));
+    let b=36+lhReg; while(pcOf(b)!==bassPc) b++;
+    if(prevBass!=null&&V.bassLead!==false){ const alt=[b-12,b,b+12].filter(x=>x>=36+lhReg&&x<=47+lhReg); alt.sort((x,y)=>Math.abs(x-prevBass)-Math.abs(y-prevBass)); b=alt[0]; }
+    prevBass=b;
     let lh=[];
-    if(V.bassMode!=='none'){
-      const bassPc=pcOf(root+(sl.bass!=null?sl.bass-sl.r:0));
-      let b=36+V.lhReg; while(pcOf(b)!==bassPc) b++; if(b>47+V.lhReg) b-=12;
-      const lhIv=typeof st.lh==='function'?st.lh(c):st.lh;
-      lh=lhIv.map(x=>typeof x==='function'?b+x(c):b+x);
-      if(sl.bass!=null&&pcOf(sl.bass)!==pcOf(sl.r)) lh=[b]; // 슬래시 코드는 베이스 단음
-      if(V.bassMode==='root') lh=[b];
+    const lhMode=V.bassMode==='none'?'none':V.bassMode==='root'?'root':st.lh;
+    if(lhMode==='oct') lh=[b,b+12];
+    else if(lhMode==='root') lh=[b];
+    else if(lhMode==='r58') lh=(sl.bass!=null&&pcOf(sl.bass)!==pcOf(sl.r))?[b,b+12]:[b,b+7,b+12];
+    if(lhMode==='none'&&st.rh!=='spread') lh=[];
+    // ----- 오른손 -----
+    let rh=[];
+    if(st.rh==='spread'){
+      // 배음 순서 스프레드: R, 5, 10(3+12), R+24, 5+24 / 7th 코드는 R+24 대신 7+12
+      const r0=b, th=third(c), has7=c.iv.find(x=>[10,11].includes(x));
+      const fifth=c.iv.includes(6)?6:c.iv.includes(8)?8:7;
+      rh=[r0,r0+fifth,r0+12+th,has7!=null?r0+12+has7:r0+24,r0+24+fifth];
+      if(c.iv.includes(14)) rh.push(r0+24+fifth+ (pcOf(14-fifth)) );
+      rh=rh.map(x=>x+reg+oct); lh=[];
+      // 스프레드는 음역을 세 옥타브에 걸쳐 고정 — 보이스 리딩은 루트 옥타브 선택으로
+    } else if(st.rh==='power'){
+      const cands=[0,12].map(o=>{ let r=55+reg+oct; while(pcOf(r)!==pcOf(root)) r++; r+=o-12; return [r,r+7,r+12]; }).filter(v=>v[0]>=50+reg+oct&&v[2]<=80+reg+oct);
+      rh=cands.sort((x,y)=>vlDist(x,prevRH)-vlDist(y,prevRH))[0]||[60,67,72];
+    } else {
+      const rel=rhTones(c,st);
+      const lo=60+reg+oct, hi=79+reg+oct, center=68+reg+oct;
+      let cands=closeCands(root,rel,lo,hi);
+      if(!cands.length) cands=closeCands(root,rel,lo-6,hi+6);
+      let best=null, bs=1e9;
+      for(const cd of cands){
+        const v=cd.v, top=v[v.length-1]; let s=0;
+        if(prevRH){ s+=lead*vlDist(v,prevRH)*1.0; const common=v.filter(x=>prevRH.includes(x)).length; s-=lead*common*1.5; }
+        s+=Math.abs((v[0]+top)/2-center)*(prevRH?0.35:0.8);
+        if(sl.top!=null) s+=Math.abs(top-sl.top)*(pcOf(top)===pcOf(sl.top)?1.5:10);
+        if(prevRH){ const pt=prevRH[prevRH.length-1];
+          if(V.topLine==='steady') s+=Math.abs(top-pt)*1.2;
+          if(V.topLine==='rise'&&top<pt) s+=4; if(V.topLine==='fall'&&top>pt) s+=4; }
+        if(V.avoidThirdTop&&pcOf(top-root)===third(c)&&rel.length===3) s+=1.5;
+        if(sl.inv!=null&&sl.inv!=='auto'){ const want=[0,third(c),7][sl.inv]; if(pcOf(v[0]-root)!==want) s+=60; }
+        // 왼손과 너무 붙거나(머디) 겹치지 않게
+        if(lh.length&&v[0]-Math.max(...lh)<3) s+=8;
+        if(s<bs){ bs=s; best=v; }
+      }
+      rh=best||rel.map(x=>root+60+x);
+      prevRH=rh;
+      if(st.add9&&!c.iv.includes(6)){ const top=rh[rh.length-1]; let nine=root+2; while(nine<=top) nine+=12; if(nine-top<=2) nine+=0; if(nine-top>12) nine-=12; if(nine>top&&nine-top>=2) rh=rh.concat([nine]); }
+      if(st.dblTop){ rh=rh.concat([rh[rh.length-1]+12]); }
+      if(st.dblAll){ rh=rh.map(x=>x-12).filter(x=>x>Math.max(...lh,0)+2).concat(rh); }
     }
-    // RH
-    let pcsRel=st.rh(c);
-    const opts={reg:V.reg+(sl.oct||0)*12,width:V.width};
-    let cands=rhCandidates(pcsRel,root,st,opts);
-    if(!cands.length) cands=rhCandidates(pcsRel,root,Object.assign({},st,{span:[0,40]}),opts);
-    const lhTop=lh.length?Math.max(...lh):0;
-    let best=cands[0]||[], bs=1e9;
-    const targetTop=sl.top!=null?sl.top:null;
-    const center=((st.range[0]+st.range[1])/2)+opts.reg;
-    for(const v of cands){
-      const top=v[v.length-1];
-      let s=0;
-      s+=V.lead*vlDist(v,prevRH)*1.0;
-      s+=Math.abs((v[0]+top)/2-center)*0.6;
-      s+=roughness([...lh,...v])*1.2;
-      if(lh.length&&v[0]-lhTop<3) s+=12;
-      if(targetTop!=null) s+=Math.abs(top-targetTop)*(pcOf(top)===pcOf(targetTop)?2:12);
-      if(V.topLine==='rise'&&prevRH) s+=top<prevRH[prevRH.length-1]?6:0;
-      if(V.topLine==='fall'&&prevRH) s+=top>prevRH[prevRH.length-1]?6:0;
-      if(V.topLine==='steady'&&prevRH) s+=Math.abs(top-prevRH[prevRH.length-1])*1.5;
-      // 3도는 탑에 두지 않는 편이 덜 달다 (선택)
-      if(V.avoidThirdTop&&pcOf(top-root)===third(c)&&!st.topDouble) s+=3;
-      // 인버전 강제
-      if(sl.inv!=null&&sl.inv!=='auto'){ const bottom=pcOf(v[0]-root); const want=[0,third(c),7][sl.inv]; if(bottom!==want) s+=40; }
-      if(s<bs){ bs=s; best=v; }
-    }
-    prevRH=best;
-    const notes=[...lh.map(p=>({p,role:'lh'})),...best.map((p,j)=>({p,role:j===best.length-1?'top':'rh'}))];
-    out.push({lh,rh:best,notes,name:chordName(root,sl.q,sl.bass!=null?key.root+sl.bass:null)});
+    if(st.rh!=='close') prevRH=rh;
+    rh=[...new Set(rh)].sort((a,b)=>a-b); lh=[...new Set(lh)].sort((a,b)=>a-b).filter(x=>!rh.includes(x));
+    const notes=[...lh.map(p=>({p,role:'lh'})),...rh.map((p,j)=>({p,role:j===rh.length-1?'top':'rh'}))];
+    out.push({lh,rh,notes,name:chordName(root,sl.q,sl.bass!=null?key.root+sl.bass:null)});
   });
   return out;
 }
@@ -1013,7 +995,7 @@ function download(blob,name){ const a=h('a',{href:URL.createObjectURL(blob),down
 
 /* ---------- 상태 ---------- */
 function defaultState(){ return {v:3,key:{root:9,mode:'min'},bpm:126,slots:[],sel:0,
-  V:{style:'proWide',reg:0,width:1,lead:1,bassMode:'full',lhReg:0,topLine:'smooth',avoidThirdTop:true},
+  V:{style:'standard',reg:0,lead:1,bassMode:'full',lhReg:0,topLine:'smooth',avoidThirdTop:true},
   rhythm:'block',arp:'off',velPreset:'pianist',velCustom:{},seed:7,sound:'grand',bassOn:false,bassStyle:'offbeat',kick:false,notes:[],sync:true,defVel:100,view:'lab'}; }
 let S=defaultState();
 const H={undo:[],redo:[],zToggle:false};
@@ -1184,16 +1166,18 @@ let _rt=null; const later=fn=>{ clearTimeout(_rt); _rt=setTimeout(fn,60); };
 function renderRight(){
   const P=$('#right'); const st=P.scrollTop; P.innerHTML=''; const V=S.V, key=S.key;
   // 보이싱 엔진
-  const vs=h('div',{class:'vlist'},...Object.entries(VOICINGS).map(([k,v])=>h('div',{class:'vopt'+(V.style===k?' on':''),onclick:()=>{ pushUndo(); V.style=k; S.sync=true; changed(); auditionSlot(S.sel); },'data-hint':v.desc},h('b',null,v.ko),h('span',null,v.desc))));
+  const vopt=([k,v])=>h('div',{class:'vopt'+(V.style===k?' on':''),onclick:()=>{ pushUndo(); V.style=k; S.sync=true; changed(); auditionSlot(S.sel); },'data-hint':v.desc},h('b',null,v.ko),h('span',null,v.desc));
+  const VE=Object.entries(VOICINGS);
+  const vs=h('div',{class:'vlist'},h('div',{class:'vgrp'},'★ 실전 기본 — 멜로딕 프로그레시브 하우스에서 실제로 많이 쓰이는 보이싱'),...VE.filter(e=>e[1].main).map(vopt),
+    h('div',{class:'vgrp dim'},'기타 장르 / 비교용'),...VE.filter(e=>!e[1].main).map(vopt));
   P.append(h('section',null,h('h3',null,'🎹 보이싱 엔진'),vs,
     slider('음역 (오른손)',V,'reg',-12,12,1,v=>(v>0?'+':'')+v+'반음','오른손 전체 높이',()=>later(()=>changed())),
-    slider('폭 (스프레드)',V,'width',0.7,1.5,0.05,v=>Math.round(v*100)+'%','보이싱이 퍼지는 폭 — 클수록 넓고 웅장',()=>later(()=>changed())),
     slider('보이스 리딩',V,'lead',0,2.5,0.1,v=>v.toFixed(1),'클수록 코드 사이 음 이동이 최소화되어 부드럽게 이어짐 (0 = 각 코드를 독립적으로)',()=>later(()=>changed())),
     slider('왼손 음역',V,'lhReg',-12,12,1,v=>(v>0?'+':'')+v,'베이스(왼손) 높이 — 서브 베이스와 겹치면 올리세요',()=>later(()=>changed())),
-    h('div',{class:'frow'},h('span',null,'왼손'),sel3([['full','스타일대로 (루트+5도/옥타브)'],['root','루트 단음'],['none','없음 (오른손만)']],V.bassMode,v=>{pushUndo(); V.bassMode=v; changed();})),
+    h('div',{class:'frow'},h('span',null,'왼손'),sel3([['full','스타일대로 (루트 옥타브 등)'],['root','루트 단음'],['none','없음 (오른손만)']],V.bassMode,v=>{pushUndo(); V.bassMode=v; changed();})),
     h('div',{class:'frow'},h('span',null,'탑노트 라인'),sel3([['smooth','자동 (부드럽게)'],['steady','최대한 같은 음 유지'],['rise','상승 라인'],['fall','하강 라인']],V.topLine,v=>{pushUndo(); V.topLine=v; changed();})),
     h('label',{class:'chk'},h('input',{type:'checkbox',checked:V.avoidThirdTop,onchange:e=>{pushUndo(); V.avoidThirdTop=e.target.checked; changed();}}),' 3도를 탑에 두지 않기 (덜 달고 세련되게)'),
-    h('div',{class:'btnrow'},h('button',{class:'sm',onclick:compareVoicings,'data-hint':'선택한 코드를 13가지 보이싱으로 비교'},'🔍 모든 보이싱 비교'),h('button',{class:'sm',onclick:()=>{ pushUndo(); S.slots.forEach(s=>{s.top=null;s.oct=0;s.inv='auto';}); changed(); }},'코드별 수동설정 초기화'))));
+    h('div',{class:'btnrow'},h('button',{class:'sm',onclick:compareVoicings,'data-hint':'선택한 코드를 모든 보이싱 스타일로 비교'},'🔍 모든 보이싱 비교'),h('button',{class:'sm',onclick:()=>{ pushUndo(); S.slots.forEach(s=>{s.top=null;s.oct=0;s.inv='auto';}); changed(); }},'코드별 수동설정 초기화'))));
   // 선택 코드
   const sl=S.slots[S.sel];
   if(sl){ const vc=S._voiced[S.sel];
@@ -1247,8 +1231,8 @@ function topStep(d){ const sl=S.slots[S.sel], vc=S._voiced[S.sel]; if(!sl||!vc) 
 function compareVoicings(){
   const sl=S.slots[S.sel]; if(!sl) return toast('먼저 코드를 선택하세요');
   const grid=h('div',{class:'vcmp'});
-  Object.entries(VOICINGS).forEach(([k,v])=>{ const ctx=S.slots.slice(Math.max(0,S.sel-1),S.sel+1); const vv=voiceProgression(ctx,S.key,Object.assign({},S.V,{style:k})); const c=vv[vv.length-1];
-    grid.append(h('div',{class:'vc'+(S.V.style===k?' on':'')},h('b',null,v.ko),h('div',{class:'vn'},c.notes.map(n=>noteName(n.p)).join(' ')),
+  Object.entries(VOICINGS).sort((x,y)=>(y[1].main||0)-(x[1].main||0)).forEach(([k,v])=>{ const ctx=S.slots.slice(Math.max(0,S.sel-1),S.sel+1); const vv=voiceProgression(ctx,S.key,Object.assign({},S.V,{style:k})); const c=vv[vv.length-1];
+    grid.append(h('div',{class:'vc'+(S.V.style===k?' on':'')},h('b',null,(v.main?'★ ':'')+v.ko),h('div',{class:'vn'},c.notes.map(n=>noteName(n.p)).join(' ')),
       h('div',{class:'btnrow'},h('button',{class:'sm',onclick:()=>audition(c.notes.map((n,i)=>({p:n.p,v:n.role==='top'?112:n.role==='lh'?98:82,off:i*0.012})),1.4)},'▶ 듣기'),
         h('button',{class:'sm pri',onclick:()=>{ pushUndo(); S.V.style=k; S.sync=true; closeModal(); changed(); }},'이 스타일 사용')))); });
   openModal(h('div',null,h('h2',null,'보이싱 비교 — '+S._voiced[S.sel].name),h('p',{class:'guide'},'이전 코드와의 보이스 리딩까지 고려한 결과입니다.'),grid,h('div',{class:'btnrow',style:'justify-content:flex-end'},h('button',{onclick:closeModal},'닫기'))));
@@ -1323,7 +1307,7 @@ function renderAll(){ syncTop(); renderLeft(); renderLabCenter(); renderRight();
 function frame(){ if(S.view==='roll'){ R._phx=T.playing?null:R._phx; rPH(); } if(S.view==='lab'&&T.playing){ drawMap(); }
   $('#pos').textContent=(()=>{ const tk=nowTick(); return (Math.floor(tk/BAR)+1)+':'+(Math.floor((tk%BAR)/PPQ)+1)+':'+(Math.floor((tk%PPQ)/24)+1); })(); requestAnimationFrame(frame); }
 function boot(){
-  try{ const s=localStorage.getItem('sinivurizer.chords'); if(s){ const p=JSON.parse(s); if(p.slots) S=Object.assign(defaultState(),p); } }catch(e){}
+  try{ const s=localStorage.getItem('sinivurizer.chords'); if(s){ const p=JSON.parse(s); if(p.slots) S=Object.assign(defaultState(),p); if(!VOICINGS[S.V.style]){ S.V.style='standard'; S.sync=true; } } }catch(e){}
   if(!S.slots.length){ S.slots=progToSlots(PROGRESSIONS[0],S.key).map(slotFrom); S.sync=true; }
   regen(S.sync);
   initTop(); initKeys(); rInit(); $$('#ltabs button').forEach(b=>b.onclick=()=>{ LT=b.dataset.t; renderLeft(); });
@@ -1571,7 +1555,7 @@ const TUT_STEPS=[
  {s:'#timeline',t:'코드 진행 타임라인',b:'카드 클릭 = 선택 + 듣기. <kbd>←</kbd><kbd>→</kbd> 이동, <kbd>↑</kbd><kbd>↓</kbd> <b>탑노트를 다음 코드톤으로</b>(멜로디 라인 만들기), <kbd>Delete</kbd> 삭제, <kbd>Ctrl+B</kbd> 복제. 카드 폭 = 코드 길이.'},
  {s:'#map',t:'보이싱 맵',b:'진행 전체의 실제 노트입니다. <b>빨간 표시 = 왼손</b>, 색 = 벨로시티(초록 약 → 빨강 강). <b>초록 실선</b> = 다음 코드에서 같은 음이 유지되는 공통음 — 많을수록 부드럽게 이어집니다.'},
  {s:'#keys',t:'선택 코드 건반',b:'선택한 코드가 건반에 어떻게 펼쳐지는지 보여 줍니다. <b>빨강 = 왼손</b>, <b>초록 = 오른손</b>, <b>밝은 초록 = 탑노트(멜로디)</b>. 3옥타브 이상 넓게 퍼지는 것이 프로 보이싱의 핵심.'},
- {s:'#right section:nth-of-type(1)',t:'🎹 보이싱 엔진 — 13가지 프로 스타일',b:'<ul><li><b>프로 와이드</b>(추천), <b>감성 add9 오픈 5도</b>, <b>앤썸 슈퍼소우 스택</b>, <b>피아노 브레이크다운</b>, 10도 스프레드, 드롭2/3, 쉘+텐션, 스택 5도, 파워, 4도 쿼탈, 하이 패드, 클로즈</li><li><b>보이스 리딩</b>: 코드 사이 움직임 최소화</li><li><b>폭·음역·왼손 음역·탑노트 라인</b></li><li><b>🔍 모든 보이싱 비교</b>로 한눈에 듣고 고르기</li></ul>'},
+ {s:'#right section:nth-of-type(1)',t:'🎹 보이싱 엔진',b:'원칙: 오른손은 C4~C5 근처 <b>클로즈 3화음</b>, 공통음은 유지하고 나머지는 가장 가깝게 이동(<b>보이스 리딩</b>), 넓이는 <b>왼손 루트 옥타브</b>와 <b>탑노트 옥타브 더블</b>로.<ul><li><b>★ 실전 기본 6종</b>: 프로그레시브 스탠다드(추천), 슈퍼소우 드롭, 피아노 브레이크다운, 와이드 스프레드, add9 감성, 옥타브 더블</li><li>기타 장르/비교용: 세븐스 키즈, 파워, 클로즈</li><li>음역 · 보이스 리딩 강도 · 왼손 음역 · 탑노트 라인</li><li><b>🔍 모든 보이싱 비교</b>로 듣고 고르기</li></ul>'},
  {s:'#right section:nth-of-type(2)',t:'🎯 선택 코드 세부 편집',b:'루트·코드 종류(22종)·<b>슬래시 베이스</b>(C/E 등)·자리바꿈·길이·탑노트 ▲▼·옥타브·<b>코드 강세</b>(클라이맥스 코드를 더 세게).'},
  {s:'#right section:nth-of-type(3)',t:'🎚 벨로시티 휴머나이저',b:'실제 프로 건반 연주자의 터치를 시뮬레이션합니다.<ul><li><b>탑노트 강조</b>: 멜로디를 노래하듯</li><li><b>내성 감쇠</b>: 가운데 음을 부드럽게 → 탁하지 않게</li><li><b>박 강세 · 프레이즈 아크</b>: 4코드 단위로 감정을 쌓고 풀기</li><li><b>휴머나이즈 · 롤 · 타이밍</b>: 손으로 친 듯한 미세한 차이</li></ul>프리셋: 피아니스트 · 드롭 스탭 · 패드 · 그루브 · 빌드업 크레센도 · 플랫'},
  {s:'#views button[data-v=roll]',t:'🎼 피아노 롤 (F7)',pre:()=>setView('roll'),b:'FL Studio 매뉴얼의 피아노 롤 조작을 그대로 따릅니다.<ul><li>도구: <kbd>P</kbd>그리기 <kbd>B</kbd>페인트 <kbd>D</kbd>삭제 <kbd>T</kbd>뮤트 <kbd>C</kbd>슬라이스 <kbd>E</kbd>선택 <kbd>Z</kbd>줌 <kbd>Y</kbd>재생</li><li>우클릭 삭제 · Shift+드래그 복제 · Ctrl+드래그 선택 · 휠클릭 드래그 이동 · Alt 스냅 해제 · Alt+휠 벨로시티 · 더블클릭 노트 속성</li><li><kbd>Ctrl+A/D/C/X/V/B/Q/L/U/G</kbd>, <kbd>Shift+↑↓←→</kbd>, <kbd>Ctrl+↑↓</kbd> 옥타브, <kbd>Alt+화살표</kbd> 미세 이동</li><li><kbd>Alt+S</kbd> 스트럼, <kbd>Alt+R</kbd> 랜덤, <kbd>Alt+X</kbd> 레벨, <kbd>Alt+Q</kbd> 퀀타이즈, <kbd>Alt+M</kbd> 뮤트</li><li><kbd>PgUp/PgDn</kbd> 줌, <kbd>Shift+4</kbd> 전체, <kbd>Shift+5</kbd> 선택 확대, <kbd>Shift+0</kbd> 재생선 중앙, <kbd>Backspace</kbd> 스냅, <kbd>Ctrl+T</kbd> 타이핑 키보드</li></ul>'},
