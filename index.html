@@ -628,6 +628,7 @@ const SOUNDS = {
 };
 const A={ctx:null};
 function ensureAudio(){
+  if(A.ctx&&A.ctx.state==='closed') A.ctx=null;
   if(A.ctx){ if(A.ctx.state!=='running') A.ctx.resume(); return A.ctx; }
   const ctx=A.ctx=new (window.AudioContext||window.webkitAudioContext)({latencyHint:'playback'});
   const M=A.master=ctx.createGain(); M.gain.value=0.85;
@@ -718,10 +719,28 @@ function play(){
   sched(); T.timer=setInterval(sched,25);
 }
 function stopPlay(reset){
+  stopSeq();
   if(T.playing){ if(!reset) T.startTick=Math.floor(nowTick()/24)*24; }
   if(reset) T.startTick=0;
   T.playing=false; clearInterval(T.timer); ui_playState();
   if(A.ctx){ const n=A.ctx.currentTime; A.active.forEach(v=>{ try{ v.g.gain.cancelScheduledValues(n); v.g.gain.setTargetAtTime(0,n,0.02); v.o.forEach(o=>o.stop(n+0.1)); }catch(e){} }); A.active=[]; [A.pump,A.bassPump].forEach(x=>{ x.gain.cancelScheduledValues(n); x.gain.setValueAtTime(1,n); }); }
+}
+/* ---------- 원샷 시퀀스 재생 (섹션/전곡 미리듣기) — 한 번에 다 예약하지 않고 룩어헤드로 조금씩 ---------- */
+const SQ={timer:null,on:false};
+function stopSeq(){ if(SQ.timer) clearInterval(SQ.timer); SQ.timer=null; if(SQ.on){ SQ.on=false; $('#btnPlay')&&$('#btnPlay').classList.remove('on'); } }
+function playSequence(notes,bass,lenTicks,onEnd){
+  stopPlay(true); ensureAudio();
+  const td=60/S.bpm/PPQ, N=[...notes].filter(n=>!n.m).sort((a,b)=>a.s-b.s), B=S.bassOn?[...(bass||[])].sort((a,b)=>a.s-b.s):[];
+  const total=lenTicks||Math.max(0,...N.map(n=>n.s+n.l));
+  let ni=0, bi=0, beat=0; const t0=A.ctx.currentTime+0.1;
+  SQ.on=true; $('#btnPlay')&&$('#btnPlay').classList.add('on');
+  const tick=()=>{ if(!A.ctx) return stopSeq();
+    const horizon=A.ctx.currentTime+0.2;
+    while(ni<N.length&&t0+N[ni].s*td<horizon){ const n=N[ni++]; playNote(n.p,Math.max(A.ctx.currentTime,t0+n.s*td),n.l*td,n.v); }
+    while(bi<B.length&&t0+B[bi].s*td<horizon){ const b=B[bi++]; playBass(b.p,Math.max(A.ctx.currentTime,t0+b.s*td),b.l*td,b.v); }
+    while(beat*PPQ<total&&t0+beat*PPQ*td<horizon){ const tm=t0+beat*PPQ*td; if(S.kick) playKick(tm); pumpAt(tm,PPQ*td); beat++; }
+    if(ni>=N.length&&bi>=B.length&&A.ctx.currentTime>t0+total*td+0.3){ stopSeq(); onEnd&&onEnd(); } };
+  tick(); SQ.timer=setInterval(tick,25);
 }
 function audition(notes,dur){ ensureAudio(); const t=A.ctx.currentTime+0.03; notes.forEach((n,i)=>playNote(n.p,t+(n.off||0),dur||1.2,n.v||100)); }
 
@@ -1070,7 +1089,7 @@ function initTop(){
   $('#keyMode').onchange=e=>{ pushUndo(); S.key.mode=e.target.value; changed({left:true}); };
   $('#bpm').onchange=e=>{ S.bpm=clamp(+e.target.value||126,60,200); e.target.value=S.bpm; changed(); };
   $('#bpm').addEventListener('wheel',e=>{ e.preventDefault(); S.bpm=clamp(S.bpm+(e.deltaY<0?1:-1),60,200); $('#bpm').value=S.bpm; changed(); },{passive:false});
-  $('#btnPlay').onclick=()=>T.playing?stopPlay(false):play(); $('#btnStop').onclick=()=>stopPlay(true);
+  $('#btnPlay').onclick=()=>SQ.on?stopPlay(true):T.playing?stopPlay(false):play(); $('#btnStop').onclick=()=>stopPlay(true);
   const so=$('#sound'); Object.entries(SOUNDS).forEach(([k,v])=>so.append(h('option',{value:k},v.ko))); so.onchange=()=>{ S.sound=so.value; save(); auditionSlot(S.sel); };
   const rh=$('#rhythm'); Object.entries(RHYTHMS).forEach(([k,v])=>rh.append(h('option',{value:k},v.ko))); rh.onchange=()=>{ pushUndo(); S.rhythm=rh.value; changed(); };
   const ar=$('#arp'); Object.entries(ARPS).forEach(([k,v])=>ar.append(h('option',{value:k},'아르프: '+v.ko))); ar.onchange=()=>{ pushUndo(); S.arp=ar.value; changed(); };
@@ -1319,9 +1338,9 @@ function notesMidi(o){
 function initKeys(){
   document.addEventListener('keydown',e=>{
     if(e.target.matches('input[type=text],input[type=number],input[type=search],textarea,select')) return;
-    if($('#modal').classList.contains('on')){ if(e.key==='Escape') closeModal(); if(e.key==='Enter'){ const b=$('#modalBox .pri'); if(b){ e.preventDefault(); b.click(); } } return; }
+    if($('#modal').classList.contains('on')){ if(e.code==='Space'&&SQ.on){ e.preventDefault(); stopPlay(true); return; } if(e.key==='Escape') closeModal(); if(e.key==='Enter'){ const b=$('#modalBox .pri'); if(b){ e.preventDefault(); b.click(); } } return; }
     const k=e.key.toLowerCase(), c=e.ctrlKey||e.metaKey;
-    if(e.code==='Space'){ e.preventDefault(); if(c){ T.playing?stopPlay(false):play(); } else { T.playing?stopPlay(true):play(); } return; }
+    if(e.code==='Space'){ e.preventDefault(); if(SQ.on){ stopPlay(true); return; } if(c){ T.playing?stopPlay(false):play(); } else { T.playing?stopPlay(true):play(); } return; }
     if(c&&e.altKey&&k==='z'){ e.preventDefault(); undoStep(); return; }
     if(c&&k==='z'){ e.preventDefault(); ctrlZ(); return; }
     if(c&&k==='s'){ e.preventDefault(); saveFile(); return; }
@@ -1867,7 +1886,7 @@ function sectionData(def){
     let t=o; slots.forEach((c,i)=>{ markers.push({t,n:voiced[i].name}); t+=c.beats*PPQ; }); }
   return {def,slots,voiced,notes,bass,markers,len:len*def.reps};
 }
-function playNotesOnce(notes,bass){ ensureAudio(); stopPlay(true); const t0=A.ctx.currentTime+0.08, td=60/S.bpm/PPQ; notes.forEach(n=>playNote(n.p,t0+n.s*td,n.l*td,n.v)); if(S.bassOn&&bass) bass.forEach(b=>playBass(b.p,t0+b.s*td,b.l*td,b.v)); }
+function playNotesOnce(notes,bass,len){ playSequence(notes,bass,len); }
 function fullSongData(){
   let off=0; const notes=[], bass=[], markers=[];
   SONG_FORM.forEach(id=>{ const d=sectionData(SECTION_DEFS.find(x=>x.id===id)); markers.push({t:off,n:'['+d.def.ko+']'});
@@ -1886,12 +1905,12 @@ function showSections(){
       h('div',{class:'cnames'},d.voiced.map(v=>v.name).join(' – ')),
       h('div',{class:'sub'},VOICINGS[def.V].ko+' · '+(RHYTHMS[def.rhythm]||{}).ko+' · '+VEL_PRESETS[def.vel].ko),
       h('p',{class:'guide'},def.desc),
-      h('div',{class:'btnrow'},h('button',{class:'sm',onclick:()=>playNotesOnce(d.notes,d.bass)},'▶ 듣기'),
+      h('div',{class:'btnrow'},h('button',{class:'sm',onclick:()=>playNotesOnce(d.notes,d.bass,d.len)},'▶ 듣기'),
         h('button',{class:'sm',onclick:()=>{ pushUndo(); S.slots=d.slots; S.V.style=def.V; S.rhythm=def.rhythm; S.velPreset=def.vel; S.velCustom={}; S.sync=true; closeModal(); setView('lab'); changed({left:true}); syncTop(); renderRight(); toast(def.ko+' 버전을 보이싱 랩으로'); }},'랩에서 편집'),
         dragChip(def.ko+' MIDI',()=>buildMidi(d.notes,d.bass,d.markers,opt),()=>'SINIVURIZER_'+def.id+'_'+asciiKey()+'.mid','섹션 MIDI'))));
   });
   const full=h('div',{class:'card',style:'margin-top:10px'},h('b',null,'🎼 전곡 구성 MIDI'),h('div',{class:'sub'},SONG_FORM.map(id=>SECTION_DEFS.find(x=>x.id===id).ko).join(' → ')+' · 섹션 이름·코드 이름 마커 포함'),
-    h('div',{class:'btnrow'},h('button',{class:'sm',onclick:()=>{ const f=fullSongData(); playNotesOnce(f.notes,f.bass); toast('전곡 미리듣기 (Space로 정지)'); }},'▶ 전곡 듣기'),
+    h('div',{class:'btnrow'},h('button',{class:'sm',onclick:()=>{ const f=fullSongData(); playNotesOnce(f.notes,f.bass,f.len); toast('전곡 미리듣기 — ■ 또는 Space로 정지'); }},'▶ 전곡 듣기'),
       dragChip('전곡 MIDI',()=>{ const f=fullSongData(); return buildMidi(f.notes,f.bass,f.markers,opt); },()=>'SINIVURIZER_fullsong_'+asciiKey()+'_'+S.bpm+'bpm.mid','전곡 MIDI')));
   box.append(grid,full,h('div',{class:'btnrow',style:'justify-content:flex-end'},h('button',{onclick:closeModal},'닫기')));
   openModal(box);
