@@ -97,6 +97,19 @@ h4{margin:10px 0 5px;color:var(--red);font-size:11.5px;letter-spacing:.3px}h4 sm
 #app{grid-template-rows:auto 1fr 22px}
 #top{flex-wrap:wrap;overflow:visible;padding:5px 8px;row-gap:5px;min-height:48px}
 .pc .rn{white-space:nowrap;font-size:10px;overflow:hidden;text-overflow:ellipsis;max-width:62px}
+
+.okbox{background:#0a1f10;border:1px solid rgba(57,255,106,.55);border-left:4px solid var(--acc);border-radius:6px;padding:9px 12px;margin:12px 0}
+.dragchip{display:inline-flex;align-items:center;gap:4px;padding:4px 9px;border:1px dashed var(--acc);border-radius:5px;color:var(--acc);font-size:12px;cursor:grab;user-select:none;background:rgba(57,255,106,.06);white-space:nowrap}
+.dragchip:hover{background:rgba(57,255,106,.16)}.dragchip:active{cursor:grabbing}
+.secgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;margin-top:10px}
+.seccard{border:1px solid #24302a;border-radius:7px;padding:10px;background:#0b0f0d}.seccard .row{display:flex;justify-content:space-between;align-items:center}
+.seccard .cnames{font-family:monospace;color:var(--acc);margin:6px 0;font-size:13px}.seccard .sub{font-size:11px;opacity:.75}
+.badge{font-size:11px;padding:1px 6px;border-radius:9px;background:#1b2a20;color:var(--acc)}
+.rgrid{display:grid;gap:2px;margin:12px 0;user-select:none;touch-action:none}
+.rnums{display:grid;grid-column:1/-1;font-size:10px;opacity:.6}
+.rc{height:34px;background:#141a17;border-radius:2px;cursor:pointer}.rc.beat{box-shadow:inset 1px 0 #3a4a40}.rc.bar{box-shadow:inset 2px 0 var(--red)}
+.rc.on{background:var(--acc)}.rc.tie{background:rgba(57,255,106,.4)}
+.okbox a,.guide a{color:var(--acc)}
 </style></head><body>
 <div id="app">
 <header id="top">
@@ -104,7 +117,9 @@ h4{margin:10px 0 5px;color:var(--red);font-size:11.5px;letter-spacing:.3px}h4 sm
  <nav id="views">
   <button data-v="lab" class="on" data-hint="코드 진행 & 보이싱 랩">🎹 보이싱 랩</button>
   <button data-v="roll" data-hint="피아노 롤 (F7) — FL Studio와 같은 조작">🎼 피아노 롤 <kbd>F7</kbd></button>
+  <button data-v="songs" data-hint="출처 확인된 유명 프로그레시브 하우스 곡의 코드 진행 + 송폼 재현 가이드">🎧 명곡 분석</button>
   <button data-v="gs" data-hint="Sylenth1 · Serum 2 사운드 메이킹 가이드북">📘 사운드 가이드북</button>
+  <button data-v="gc" data-hint="멜로딕 프로그레시브 하우스 작편곡 가이드북">📙 작편곡</button>
   <button data-v="gm" data-hint="FL Studio 믹싱 · 마스터링 가이드북">📗 믹싱·마스터링</button>
  </nav>
  <div class="grp">
@@ -112,12 +127,12 @@ h4{margin:10px 0 5px;color:var(--red);font-size:11.5px;letter-spacing:.3px}h4 sm
  </div>
  <div class="grp"><label>키</label><select id="keyRoot"></select><select id="keyMode"><option value="min">마이너</option><option value="maj">메이저</option></select>
   <label>템포</label><input id="bpm" type="number" min="60" max="200"></div>
- <div class="grp"><select id="sound" data-hint="미리듣기 사운드"></select><select id="rhythm" data-hint="코드 주법 (리듬) — 피아노 롤 노트에 반영"></select><select id="arp" data-hint="아르페지오 (오른손)"></select>
+ <div class="grp"><select id="sound" data-hint="미리듣기 사운드"></select><select id="rhythm" data-hint="코드 주법 (리듬) — 피아노 롤 노트에 반영"></select><button id="btnRhy" class="sm" data-hint="주법(코드 리듬) 직접 편집 — 16분 그리드, 1~2마디">🥁 편집</button><select id="arp" data-hint="아르페지오 (오른손)"></select>
   <button id="btnKick" class="sm" data-hint="킥 + 사이드체인 펌핑으로 실제 곡처럼 듣기">킥</button><button id="btnBass" class="sm" data-hint="베이스(루트) 함께 듣기 · MIDI에 베이스 트랙">베이스</button><select id="bassStyle"></select></div>
  <div class="sp"></div>
  <div class="grp"><button id="btnUndo" class="sm" data-hint="한 단계 실행 취소 <b>Ctrl+Alt+Z</b> (Ctrl+Z = 마지막 편집 토글, FL Studio 방식)">↶</button><button id="btnRedo" class="sm" data-hint="다시 실행">↷</button>
   <button id="btnNew" class="sm" data-hint="완전 새로 시작">새로</button><button id="btnOpen" class="sm" data-hint="프로젝트(.sinv.json) 또는 MIDI 열기 <b>Ctrl+M</b>">열기</button><button id="btnSave" class="sm" data-hint="저장 <b>Ctrl+S</b>">저장</button>
-  <button id="btnExport" class="pri" data-hint="MIDI 내보내기 <b>Ctrl+E</b>">⤓ MIDI</button><button id="btnHelp" class="sm" data-hint="튜토리얼 <b>F1</b>">?</button></div>
+  <button id="btnSec" class="sm" data-hint="섹션별 코드 진행 변주 (인트로·브레이크다운·빌드업·드롭) + 전곡 MIDI">🏗 섹션 변주</button><span id="dragTop"></span><button id="btnExport" class="pri" data-hint="MIDI 내보내기 <b>Ctrl+E</b>">⤓ MIDI</button><button id="btnHelp" class="sm" data-hint="튜토리얼 <b>F1</b>">?</button></div>
  <input type="file" id="fileIn" accept=".json,.sinv,.mid,.midi" style="display:none">
 </header>
 <main>
@@ -134,7 +149,9 @@ h4{margin:10px 0 5px;color:var(--red);font-size:11.5px;letter-spacing:.3px}h4 sm
   <aside id="right"></aside>
  </section>
  <section class="view" id="v-roll"><div class="toolbar" id="rollBar"></div><div id="rollWrap"><canvas id="roll"></canvas><canvas id="rollPH"></canvas></div></section>
+ <section class="view guide" id="v-songs"></section>
  <section class="view guide" id="v-gs"></section>
+ <section class="view guide" id="v-gc"></section>
  <section class="view guide" id="v-gm"></section>
 </main>
 <footer id="hint"><span id="hintText">SINIVURIZER 코드 &amp; 보이싱 랩 — 마우스를 올리면 설명이 여기에 표시됩니다. <b>F1</b> 튜토리얼</span></footer>
@@ -505,11 +522,11 @@ const ARPS = {
 
 /* ---------- 프로 벨로시티 휴머나이저 ---------- */
 const VEL_PRESETS = {
-  pianist:{ko:'🎹 피아니스트 (감성 브레이크다운)',lo:42,hi:112,top:0.16,inner:0.16,bass:0.06,beat:0.10,phrase:0.12,human:0.045,roll:14,timing:6,first:0.08},
-  stab:{ko:'💥 드롭 스탭 (강하고 단단하게)',lo:88,hi:124,top:0.07,inner:0.05,bass:0.04,beat:0.07,phrase:0.04,human:0.02,roll:0,timing:2,first:0.04},
-  pad:{ko:'☁ 패드 (부드럽고 일정)',lo:60,hi:92,top:0.06,inner:0.06,bass:0.0,beat:0.02,phrase:0.06,human:0.02,roll:4,timing:3,first:0.03},
-  groove:{ko:'🕺 그루브 (오프비트 강조)',lo:60,hi:118,top:0.1,inner:0.1,bass:0.05,beat:-0.12,phrase:0.05,human:0.04,roll:3,timing:5,first:0.05},
-  build:{ko:'🚀 빌드업 크레센도',lo:40,hi:127,top:0.1,inner:0.08,bass:0.04,beat:0.08,phrase:0.0,human:0.03,roll:0,timing:3,first:0.0,cresc:true},
+  pianist:{ko:'🎹 피아니스트 (감성 브레이크다운)',lo:42,hi:112,top:0.16,inner:0.16,bass:0.06,beat:0.10,phrase:0.12,human:0.045,roll:0,timing:0,first:0.08},
+  stab:{ko:'💥 드롭 스탭 (강하고 단단하게)',lo:88,hi:124,top:0.07,inner:0.05,bass:0.04,beat:0.07,phrase:0.04,human:0.02,roll:0,timing:0,first:0.04},
+  pad:{ko:'☁ 패드 (부드럽고 일정)',lo:60,hi:92,top:0.06,inner:0.06,bass:0.0,beat:0.02,phrase:0.06,human:0.02,roll:0,timing:0,first:0.03},
+  groove:{ko:'🕺 그루브 (오프비트 강조)',lo:60,hi:118,top:0.1,inner:0.1,bass:0.05,beat:-0.12,phrase:0.05,human:0.04,roll:0,timing:0,first:0.05},
+  build:{ko:'🚀 빌드업 크레센도',lo:40,hi:127,top:0.1,inner:0.08,bass:0.04,beat:0.08,phrase:0.0,human:0.03,roll:0,timing:0,first:0.0,cresc:true},
   flat:{ko:'▭ 플랫 (기계적, 사운드 디자인용)',lo:100,hi:100,top:0,inner:0,bass:0,beat:0,phrase:0,human:0,roll:0,timing:0,first:0}
 };
 /* note: {s,l,p,role,idx(chord index),pos(16th in bar)} → v(1~127), off(ticks) */
@@ -559,7 +576,7 @@ function buildEvents(state, voiced){
     } else if(R.whole){
       chordNotes.forEach((n,k)=>add(n.p,t,len-4,n.role,true,k));
     } else {
-      for(let b=0;b*BAR<len;b++) R.r.forEach(([st,l])=>{ const s=b*BAR+st*24; if(s>=len) return; chordNotes.forEach((n,k)=>add(n.p,t+s,Math.min(l*24,len-s)-4,n.role,s===0,k)); });
+      const PL=(R.bars||1)*BAR; for(let b=0;b*PL<len;b++) R.r.forEach(([st,l])=>{ const s=b*PL+st*24; if(s>=len) return; chordNotes.forEach((n,k)=>add(n.p,t+s,Math.min(l*24,len-s)-4,n.role,s===0,k)); });
     }
     t+=len;
   });
@@ -709,14 +726,14 @@ function stopPlay(reset){
 function audition(notes,dur){ ensureAudio(); const t=A.ctx.currentTime+0.03; notes.forEach((n,i)=>playNote(n.p,t+(n.off||0),dur||1.2,n.v||100)); }
 
 /* ============ 피아노 롤 — FL Studio 조작 체계 ============ */
-const R={tool:'draw',snap:24,snapOn:true,ppt:0.9,sx:0,sy:null,sel:new Set(),clip:[],typing:false,lastLen:PPQ*2,drag:null,ghost:true,W:0,H:0,keysW:60,rulerH:30,rowH:13,velH:96,minP:21,maxP:108,cv:null,g:null,hover:null};
+const R={keyGuide:true,chordGuide:true,scaleLock:false,hc:null,tool:'draw',snap:24,snapOn:true,ppt:0.9,sx:0,sy:null,sel:new Set(),clip:[],typing:false,lastLen:PPQ*2,drag:null,ghost:true,W:0,H:0,keysW:60,rulerH:30,rowH:13,velH:96,minP:21,maxP:108,cv:null,g:null,hover:null};
 const TOOLS=[['draw','✏','그리기','P','클릭: 노트 추가 · 드래그: 이동 · 끝 드래그: 길이 · Shift+드래그: 복제 · Ctrl+드래그: 선택 · 우클릭: 삭제 · 더블클릭: 노트 속성'],
  ['paint','🖌','페인트','B','드래그하는 대로 노트를 연속으로 칠하기'],['erase','⌫','삭제','D','클릭/드래그로 노트 삭제'],['mute','🔇','뮤트','T','클릭/드래그로 노트 뮤트 토글 (회색 = 연주 안 됨)'],
  ['slice','✂','슬라이스','C','노트 위를 클릭하면 그 위치에서 자르기'],['select','⬚','선택','E','드래그: 범위 선택 · Shift+Ctrl+클릭: 추가 선택'],['zoom','🔍','줌','Z','드래그한 구간으로 확대 · 우클릭: 축소'],['play','▶','재생','Y','클릭/드래그: 그 위치의 노트를 들어보기 (스크럽)']];
 const SNAPS=[[0,'(없음)'],[BAR,'1 마디'],[PPQ*2,'1/2 박'],[PPQ,'1 박'],[PPQ/2,'1/2 스텝'],[24,'1 스텝 (1/16)'],[12,'1/2 스텝 (1/32)'],[PPQ/3,'1/3 박 (셋잇단)'],[PPQ/6,'1/6 박']];
 function rInit(){
   R.cv=$('#roll'); R.g=R.cv.getContext('2d',{alpha:false}); R.ph=$('#rollPH'); R.pg=R.ph.getContext('2d');
-  R.cv.addEventListener('pointerdown',rDown); R.cv.addEventListener('pointermove',rMove); R.cv.addEventListener('pointerup',rUp);
+  R.cv.addEventListener('pointerdown',rDown); R.cv.addEventListener('pointermove',rMove); R.cv.addEventListener('pointerup',rUp); R.cv.addEventListener('pointerleave',()=>{ R.hc=null; R._hk='x'; rPH(); });
   R.cv.addEventListener('dblclick',rDbl); R.cv.addEventListener('contextmenu',e=>e.preventDefault()); R.cv.addEventListener('wheel',rWheel,{passive:false});
   rToolbar();
 }
@@ -728,6 +745,9 @@ function rToolbar(){
   B.append(h('span',{class:'sep'}),h('span',{class:'lbl'},'스냅'),sn,
     h('button',{class:'sm'+(R.snapOn?' on':''),'data-hint':'글로벌 스냅 (Backspace)',onclick:()=>{R.snapOn=!R.snapOn; rToolbar();}},'🧲'),
     h('button',{class:'sm'+(R.ghost?' on':''),'data-hint':'코드 구간·이름 표시 (Alt+V)',onclick:()=>{R.ghost=!R.ghost; rToolbar(); rDraw();}},'👻'),
+    h('button',{class:'sm'+(R.keyGuide?' on':''),'data-hint':'<b>키 가이드</b> — 현재 키의 스케일 음 줄을 초록으로, 근음 줄을 진하게 표시',onclick:()=>{R.keyGuide=!R.keyGuide; rToolbar(); rDraw();}},'🎼 키 가이드'),
+    h('button',{class:'sm'+(R.chordGuide?' on':''),'data-hint':'<b>코드톤 가이드</b> — 각 코드 구간에서 그 코드의 구성음 줄을 밝게 표시 (빨강 = 코드 루트)',onclick:()=>{R.chordGuide=!R.chordGuide; rToolbar(); rDraw();}},'🎯 코드톤'),
+    h('button',{class:'sm'+(R.scaleLock?' on':''),'data-hint':'<b>스케일 고정</b> — 노트를 그리거나 옮길 때 스케일 밖 음은 가장 가까운 스케일 음으로 자동 보정',onclick:()=>{R.scaleLock=!R.scaleLock; rToolbar();}},'🧲 스케일 고정'),
     h('button',{class:'sm'+(R.typing?' on':''),'data-hint':'타이핑 키보드를 피아노로 (Ctrl+T) — 켜면 단일 키 단축키 대신 연주',onclick:()=>{R.typing=!R.typing; rToolbar();}},'⌨'),
     h('span',{class:'sep'}),
     h('button',{class:'sm','data-hint':'퀀타이즈 (Ctrl+Q 빠른 / Alt+Q 상세)',onclick:()=>dlgQuantize()},'Q'),
@@ -754,6 +774,11 @@ function rClamp(){ const L=songLen(); R.sx=clamp(R.sx,0,Math.max(0,L-visT()*0.4)
 function rCenter(){ const ps=S.notes.map(n=>n.p); const mid=ps.length?(Math.min(...ps)+Math.max(...ps))/2:60; R.sy=(R.maxP-mid)*R.rowH-(gH()||400)/2; }
 function showAll(){ R.ppt=Math.max(0.1,(R.W-R.keysW-20)/songLen()); R.sx=0; rCenter(); rDraw(); }
 function zoomAt(f,ax){ ax=ax==null?R.keysW:ax; const tk=TK(ax); R.ppt=clamp(R.ppt*f,0.08,10); R.sx=tk-(ax-R.keysW)/R.ppt; rDraw(); }
+function keyPcs(){ return SCALE_OF(S.key.mode).map(i=>(S.key.root+i)%12); }
+function degreeOf(p){ const i=SCALE_OF(S.key.mode).indexOf(pcOf(p-S.key.root)); return i<0?null:i+1; }
+function lockP(p){ if(!R.scaleLock) return p; const k=keyPcs(); for(let d=0;d<7;d++){ if(k.includes(pcOf(p+d))) return p+d; if(k.includes(pcOf(p-d))) return p-d; } return p; }
+function chordAtTick(tk){ let t=0; for(let i=0;i<S.slots.length;i++){ const w=S.slots[i].beats*PPQ; if(tk>=t&&tk<t+w) return {i,t,w}; t+=w; } return null; }
+function chordPcs(i){ const sl=S.slots[i]; if(!sl) return {pcs:[],root:null}; const root=pcOf(S.key.root+sl.r); return {pcs:QUAL[sl.q].iv.map(x=>pcOf(root+x)),root}; }
 function inKey(p){ return SCALE_OF(S.key.mode).map(i=>(S.key.root+i)%12).includes(pcOf(p)); }
 function velCol(v,a){ const t=clamp((v-30)/97,0,1); const r=Math.round(57+(255-57)*t), g=Math.round(255-(255-45)*t), b=Math.round(106-(106-85)*t); return `rgba(${r},${g},${b},${a==null?1:a})`; }
 function rDraw(){
@@ -762,8 +787,11 @@ function rDraw(){
   g.save(); g.beginPath(); g.rect(R.keysW,top,W,gh); g.clip();
   const pT=PI(top), pB=PI(top+gh);
   for(let p=pT;p>=pB-1;p--){ const y=Y(p), blk=[1,3,6,8,10].includes(pcOf(p));
-    g.fillStyle=inKey(p)?(blk?'#161c1f':'#1b2226'):(blk?'#0f1315':'#13181b'); if(pcOf(p)===S.key.root) g.fillStyle='#14281b';
+    if(R.keyGuide){ g.fillStyle=inKey(p)?(blk?'#14231a':'#18291e'):(blk?'#090c0d':'#0c1012'); if(pcOf(p)===S.key.root) g.fillStyle='#1f4029'; }
+    else { g.fillStyle=blk?'#111618':'#161c1f'; }
     g.fillRect(R.keysW,y,W,R.rowH); g.fillStyle='#0a0d0f'; g.fillRect(R.keysW,y+R.rowH-1,W,1); }
+  if(R.chordGuide){ let t=0; S.slots.forEach((sl,i)=>{ const w=sl.beats*PPQ, x0=X(t), x1=X(t+w); t+=w; if(x1<R.keysW||x0>W) return; const cp=chordPcs(i);
+    for(let p=pT;p>=pB-1;p--){ const pc=pcOf(p); if(!cp.pcs.includes(pc)) continue; g.fillStyle=pc===cp.root?'rgba(255,45,85,.16)':'rgba(57,255,106,.11)'; g.fillRect(x0,Y(p),x1-x0,R.rowH-1); } }); }
   const t1=R.sx+visT(); const step=R.snap||24;
   for(let tk=Math.floor(R.sx/24)*24;tk<=t1;tk+=24){ if(R.ppt*24<4&&tk%PPQ) continue; g.fillStyle=tk%BAR===0?'#3d4a52':tk%PPQ===0?'#232c31':'#171d20'; g.fillRect(Math.round(X(tk)),top,1,gh); }
   if(X(L)<W){ g.fillStyle='rgba(0,0,0,.5)'; g.fillRect(X(L),top,W,gh); }
@@ -783,8 +811,9 @@ function rDraw(){
   g.save(); g.beginPath(); g.rect(0,top,R.keysW,gh); g.clip();
   for(let p=pT;p>=pB-1;p--){ const y=Y(p), pc=pcOf(p), blk=[1,3,6,8,10].includes(pc);
     g.fillStyle=blk?'#111':'#dfe7e2'; if(R.hover===p) g.fillStyle='#39ff6a'; g.fillRect(0,y,R.keysW-(blk?20:0),R.rowH-1);
-    if(pc===0){ g.fillStyle='#222'; g.font='bold 9px sans-serif'; g.fillText('C'+(p/12-1),R.keysW-24,y+R.rowH-3); }
-    if(inKey(p)){ g.fillStyle='#39ff6a'; g.fillRect(R.keysW-4,y+2,3,R.rowH-5); } }
+    if(R.keyGuide&&inKey(p)){ const d=degreeOf(p); g.fillStyle=pcOf(p)===S.key.root?'#ff2d55':'#1fd94f'; g.font='bold 8.5px sans-serif'; g.fillText(NOTE_NAMES[pc]+(pc===0?(p/12-1):'')+' '+d,blk?R.keysW-19:R.keysW-30,y+R.rowH-3.5); }
+    else if(pc===0){ g.fillStyle='#222'; g.font='bold 9px sans-serif'; g.fillText('C'+(p/12-1),R.keysW-24,y+R.rowH-3); }
+    if(R.keyGuide&&inKey(p)){ g.fillStyle=pcOf(p)===S.key.root?'#ff2d55':'#39ff6a'; g.fillRect(R.keysW-4,y+1,4,R.rowH-3); } }
   g.restore();
   // ruler
   g.fillStyle='#12171a'; g.fillRect(0,0,W,top); g.save(); g.beginPath(); g.rect(R.keysW,0,W,top); g.clip();
@@ -802,7 +831,13 @@ function rDraw(){
   g.restore();
   R._phx=null; rPH();
 }
-function rPH(){ if(!R.pg) return; const tk=nowTick(); const px=Math.round(X(tk)); if(px===R._phx) return; R._phx=px; const g=R.pg; g.clearRect(0,0,R.W,R.H);
+function rPH(){ if(!R.pg) return; const tk=nowTick(); const px=Math.round(X(tk)); const hk=R.hc?R.hc.p+':'+R.hc.s:''; if(px===R._phx&&hk===R._hk) return; R._phx=px; R._hk=hk; const g=R.pg; g.clearRect(0,0,R.W,R.H);
+  if(R.hc&&!R.drag&&(R.tool==='draw'||R.tool==='paint')){ const {p,s}=R.hc, x=X(s), y=Y(p), w=Math.max(4,R.lastLen*R.ppt-1);
+    const ik=inKey(p), ch=chordAtTick(s), cp=ch?chordPcs(ch.i):{pcs:[]}; const ct=cp.pcs.includes(pcOf(p));
+    g.fillStyle=ik?(ct?'rgba(57,255,106,.45)':'rgba(57,255,106,.25)'):'rgba(255,45,85,.35)'; g.fillRect(x,y+1,w,R.rowH-2); g.strokeStyle=ik?'#39ff6a':'#ff2d55'; g.strokeRect(x+.5,y+1.5,w-1,R.rowH-3);
+    const d=degreeOf(p); const lbl=noteName(p)+'  '+(ik?d+'도'+(d===1?' (으뜸음)':''):'스케일 밖')+(ct?' · 코드톤':'');
+    g.font='bold 11px sans-serif'; const tw=g.measureText(lbl).width+12; const lx=Math.min(x+w+6,R.W-tw-4), ly=y-4;
+    g.fillStyle='rgba(5,10,7,.92)'; g.fillRect(lx,ly-12,tw,17); g.strokeStyle=ik?'#39ff6a':'#ff2d55'; g.strokeRect(lx+.5,ly-11.5,tw-1,16); g.fillStyle=ik?'#b6ffcb':'#ff8fa5'; g.fillText(lbl,lx+6,ly+1); }
   if(px<R.keysW||px>R.W) return; g.fillStyle=T.playing?'#39ff6a':'#ff2d55'; g.shadowColor=g.fillStyle; g.shadowBlur=6; g.fillRect(px,0,1.5,R.H-R.velH); g.shadowBlur=0; g.beginPath(); g.moveTo(px-5,0); g.lineTo(px+6,0); g.lineTo(px+.5,7); g.fill(); }
 function rPos(e){ const r=R.cv.getBoundingClientRect(), x=e.clientX-r.left, y=e.clientY-r.top; let area='grid';
   if(y<R.rulerH) area='ruler'; else if(y>R.rulerH+gH()) area='vel'; else if(x<R.keysW) area='keys'; return {x,y,area,tk:TK(x),p:PI(y)}; }
@@ -842,7 +877,7 @@ function rDown(e){
     audition([{p:n.p,v:n.v}],0.25); startMove(m,n,e); return;
   }
   if(R.tool==='paint'){ R.drag={mode:'paint',last:null}; paintAt(m,e); return; }
-  const s=sn(m.tk,e); const nn={p:m.p,s:Math.max(0,s),l:R.lastLen,v:S.defVel||100,m:false,role:'rh'};
+  const s=sn(m.tk,e); const nn={p:lockP(m.p),s:Math.max(0,s),l:R.lastLen,v:S.defVel||100,m:false,role:'rh'};
   S.notes.push(nn); R.sel.clear(); audition([{p:nn.p,v:nn.v}],0.25); edited();
   if(e.shiftKey){ R.drag={mode:'resize',n:nn,grp:[nn],orig:[nn.l],tk0:nn.s+nn.l,created:true}; }
   else startMove(m,nn,e,true);
@@ -851,6 +886,7 @@ function rDown(e){
 function startMove(m,n,e,created){ const grp=R.sel.has(n)?[...R.sel]:[n]; R.drag={mode:'move',n,grp,orig:grp.map(o=>({s:o.s,p:o.p})),tk0:m.tk,p0:m.p,ns0:n.s,created}; }
 function rMove(e){
   const m=rPos(e);
+  if(!R.drag){ const nh=m.area==='grid'&&!noteAt(m)?{p:lockP(m.p),s:Math.max(0,sn(m.tk,e))}:null; if(JSON.stringify(nh)!==JSON.stringify(R.hc)){ R.hc=nh; rPH(); } }
   if(!R.drag){ if(m.area==='grid'&&(R.tool==='draw'||R.tool==='select')){ const n=noteAt(m); R.cv.style.cursor=n?(X(n.s+n.l)-m.x<Math.min(8,n.l*R.ppt/3)?'ew-resize':'move'):(R.tool==='draw'?'crosshair':'default'); } return; }
   const d=R.drag;
   if(d.mode==='pan'){ R.sx=d.sx-(m.x-d.x)/R.ppt; R.sy=d.sy-(m.y-d.y); rDraw(); return; }
@@ -867,7 +903,7 @@ function rMove(e){
   if(d.mode==='move'){
     let ns=sn(d.ns0+(m.tk-d.tk0),e,true), dt=ns-d.ns0; const dp=m.p-d.p0;
     const mn=Math.min(...d.orig.map(o=>o.s)); if(mn+dt<0) dt=-mn;
-    d.grp.forEach((n,i)=>{ n.s=d.orig[i].s+dt; n.p=clamp(d.orig[i].p+dp,0,127); });
+    d.grp.forEach((n,i)=>{ n.s=d.orig[i].s+dt; n.p=clamp(R.scaleLock?lockP(d.orig[i].p+dp):d.orig[i].p+dp,0,127); });
     if(dp!==d.ldp){ d.ldp=dp; if(dp) audition([{p:d.n.p,v:d.n.v}],0.18); }
     edited(); rDraw(); return; }
   if(d.mode==='resize'){ const s=snapOn(e)?R.snap:1; const dt=Math.round((m.tk-d.tk0)/s)*s; d.grp.forEach((n,i)=>n.l=Math.max(s>1?s:3,d.orig[i]+dt)); R.lastLen=d.n.l; edited(); rDraw(); }
@@ -894,7 +930,7 @@ function rWheel(e){
 function delNote(n){ const i=S.notes.indexOf(n); if(i>=0){ S.notes.splice(i,1); R.sel.delete(n); edited(); } }
 function setVelAt(m){ const vy=R.rulerH+gH(); const v=Math.round(clamp(1-(m.y-vy-4)/(R.velH-12),0,1)*126+1);
   const tg=R.sel.size?[...R.sel]:S.notes; tg.forEach(n=>{ if(Math.abs(X(n.s)-m.x)<=Math.max(4,R.ppt*12)) n.v=v; }); edited(); rDraw(); $('#hintText').innerHTML='벨로시티 <b>'+v+'</b>'; }
-function paintAt(m,e){ const s=sn(m.tk,e); const d=R.drag; const L=R.lastLen; const slot=Math.floor(s/L)*L;
+function paintAt(m,e){ m={...m,p:lockP(m.p)}; const s=sn(m.tk,e); const d=R.drag; const L=R.lastLen; const slot=Math.floor(s/L)*L;
   if(d.last===slot+':'+m.p) return; if(S.notes.some(n=>n.p===m.p&&n.s===slot)) return; d.last=slot+':'+m.p;
   if(!d.u){ pushUndo(); d.u=1; } S.notes.push({p:m.p,s:Math.max(0,slot),l:L,v:S.defVel||100,m:false,role:'rh'}); audition([{p:m.p,v:90}],0.15); edited(); rDraw(); }
 function sliceAt(m,e){ const s=sn(m.tk,e,true); const tg=S.notes.filter(n=>s>n.s&&s<n.s+n.l&&(!R.sel.size||R.sel.has(n))&&(R.sel.size||n.p===m.p)); tg.forEach(n=>{ const r={...n,s,l:n.s+n.l-s}; n.l=s-n.s; S.notes.push(r); }); if(tg.length){ edited(); toast('✂ '+tg.length+'개 노트 자르기',800); } }
@@ -1053,7 +1089,7 @@ function syncTop(){ $('#keyRoot').value=S.key.root; $('#keyMode').value=S.key.mo
   $('#btnKick').classList.toggle('on',S.kick); $('#btnBass').classList.toggle('on',S.bassOn); }
 function ui_playState(){ $('#btnPlay').classList.toggle('on',T.playing); $('#btnPlay').textContent=T.playing?'❚❚':'▶'; }
 function setView(v){ S.view=v; $$('#views button').forEach(b=>b.classList.toggle('on',b.dataset.v===v)); $$('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
-  if(v==='roll'){ rToolbar(); setTimeout(rResize,10); } if(v==='lab') setTimeout(()=>{drawMap();drawKeys();},10); if(v==='gs') renderGuide('gs'); if(v==='gm') renderGuide('gm'); }
+  if(v==='roll'){ rToolbar(); setTimeout(rResize,10); } if(v==='lab') setTimeout(()=>{drawMap();drawKeys();},10); if(v==='gs') renderGuide('gs'); if(v==='gm') renderGuide('gm'); if(v==='gc') renderGuide('gc'); if(v==='songs') renderSongs(); }
 
 /* ---------- 왼쪽: 팔레트 / 라이브러리 / 추천 / 입력 ---------- */
 let LT='pal', LIBF='전체', LIBQ='';
@@ -1264,6 +1300,7 @@ function showExport(){
     h('label',{class:'chk'},h('input',{type:'checkbox',onchange:e=>o.split=e.target.checked}),' 왼손 / 오른손을 별도 트랙으로 분리 (레이어용: 왼손 → 피아노, 오른손 → 슈퍼소우)'),
     h('div',{class:'btnrow',style:'margin-top:10px'},
       h('button',{class:'pri',onclick:()=>{ download(new Blob([notesMidi(o)],{type:'audio/midi'}),'SINIVURIZER_'+keyName(S.key.root,S.key.mode)+'_'+S.bpm+'bpm.mid'); toast('MIDI 저장 완료'); }},'⤓ MIDI 저장'),
+      dragChip('FL로 드래그',()=>notesMidi(o),curMidiName,'이 설정 그대로'),
       h('button',{onclick:()=>{ const t=S._voiced.map(v=>v.name).join(' - '); (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast('코드 이름 복사됨: '+t)).catch(()=>prompt('복사하세요',t)); }},'코드 이름 복사'),
       h('button',{onclick:closeModal},'닫기')));
   openModal(box);
@@ -1310,7 +1347,9 @@ function boot(){
   try{ const s=localStorage.getItem('sinivurizer.chords'); if(s){ const p=JSON.parse(s); if(p.slots) S=Object.assign(defaultState(),p); if(!VOICINGS[S.V.style]){ S.V.style='standard'; S.sync=true; } } }catch(e){}
   if(!S.slots.length){ S.slots=progToSlots(PROGRESSIONS[0],S.key).map(slotFrom); S.sync=true; }
   regen(S.sync);
-  initTop(); initKeys(); rInit(); $$('#ltabs button').forEach(b=>b.onclick=()=>{ LT=b.dataset.t; renderLeft(); });
+  loadCustomRhythms(); initTop(); initKeys();
+  $('#btnRhy').onclick=showRhythmEditor; $('#btnSec').onclick=showSections;
+  $('#dragTop').append(dragChip('FL로 드래그',()=>notesMidi({bass:S.bassOn,split:false}),curMidiName,'피아노 롤 노트 그대로')); rInit(); $$('#ltabs button').forEach(b=>b.onclick=()=>{ LT=b.dataset.t; renderLeft(); });
   renderAll(); setView(S.view||'lab'); requestAnimationFrame(frame);
   window.addEventListener('resize',()=>{ if(S.view==='roll') rResize(); else { drawMap(); drawKeys(); } });
   document.addEventListener('pointerdown',()=>{ if(A.ctx&&A.ctx.state!=='running') A.ctx.resume(); },{capture:true});
@@ -1530,12 +1569,13 @@ const MIX_GUIDE = [
  {g:'부록',id:'m-tips',t:'17. 프로 팁 & 흔한 실수 TOP 15',h:ol([
   '킥이 작게 느껴지면 킥을 키우기 전에 서브/베이스 사이드체인부터 늘려 보기.','모든 악기를 넓게 만들면 결국 아무것도 넓지 않음 — 대비가 폭이다.','리버브는 Send로, 그리고 반드시 EQ·사이드체인.','코드 보이싱이 낮으면 EQ로 해결 불가 — 보이싱(이 앱!)부터 고치기.','같은 음역에 리드 2개를 겹치지 말고 옥타브로 분리.','솔로로 소리 만들지 말고 믹스 안에서 만들기.','레퍼런스와 라우드니스를 맞추지 않은 비교는 무의미.','마스터 리미터로 믹스 문제를 덮지 않기.','하이햇·FX 고역이 과하면 귀가 빨리 피로해짐 — 10kHz 이상 체크.','드롭 전 무음/필터 다운은 드롭을 2배 크게 만든다.','벨로시티 휴머나이즈로 피아노/플럭을 살리면 리버브를 덜 써도 감정이 산다.','서브는 E1~D#2 근처 키가 가장 단단.','16분 롤링 베이스 + 8분 오프비트 코드는 서로 리듬을 양보하게.','작업 1시간마다 귀 휴식 5~10분.','프로젝트를 버전별로 저장(곡명_v1, v2…).'])}
 ];
-let GQ='', GSEL={gs:'s-intro',gm:'m-intro'};
+let GQ='', GSEL={gs:'s-intro',gm:'m-intro',gc:'c-intro'};
 function renderGuide(which){
-  const data=which==='gs'?SOUND_GUIDE:MIX_GUIDE; const root=$('#v-'+which); root.innerHTML='';
+  const data=which==='gs'?SOUND_GUIDE:which==='gc'?COMP_GUIDE:MIX_GUIDE; const root=$('#v-'+which); root.innerHTML='';
   const toc=h('div',{class:'gtoc'}), body=h('article',{class:'gbody'});
   const q=h('input',{type:'search',placeholder:'가이드북 검색…',value:GQ,oninput:e=>{ GQ=e.target.value; drawToc(); }});
-  toc.append(h('div',{class:'gtitle'},which==='gs'?'🎛 사운드 메이킹 가이드북':'🎚 믹싱 · 마스터링 가이드북',h('small',null,which==='gs'?'Sylenth1 · Serum 2로 만드는 멜로딕 프로그레시브 하우스 사운드':'FL Studio 프로 믹싱·마스터링 테크닉')),q);
+  const TT={gs:['🎛 사운드 메이킹 가이드북','Sylenth1 · Serum 2로 만드는 멜로딕 프로그레시브 하우스 사운드'],gm:['🎚 믹싱 · 마스터링 가이드북','FL Studio 프로 믹싱·마스터링 테크닉'],gc:['🎼 작편곡 가이드북','멜로딕 프로그레시브 하우스 작곡·편곡 프로 가이드']}[which];
+  toc.append(h('div',{class:'gtitle'},TT[0],h('small',null,TT[1])),q);
   const list=h('div'); toc.append(list);
   const show=id=>{ GSEL[which]=id; const c=data.find(x=>x.id===id)||data[0]; body.innerHTML=`<div class="gcat">${c.g}</div><h2>${c.t}</h2>`+c.h;
     const i=data.indexOf(c); body.append(h('div',{class:'gnav'},i>0?h('button',{onclick:()=>show(data[i-1].id)},'← '+data[i-1].t):h('span'),i<data.length-1?h('button',{class:'pri',onclick:()=>show(data[i+1].id)},data[i+1].t+' →'):h('span')));
@@ -1545,9 +1585,358 @@ function renderGuide(which){
   root.append(toc,body); show(GSEL[which]);
 }
 
+/* ============ 작편곡 가이드북 ============ */
+const COMP_GUIDE = [
+ {g:'시작하기',id:'c-intro',t:'이 가이드북 사용법',h:`<p class="lead">멜로딕 프로그레시브 하우스를 <b>작곡(코드·멜로디·베이스·그루브)</b>부터 <b>편곡(곡 구조·섹션·트랜지션)</b>까지 프로 수준으로 완성하기 위한 실전 가이드입니다.</p>
+  ${ul(['장르 관습은 <b>출발점</b>이지 규칙이 아닙니다. 레퍼런스 곡을 직접 분석해 자신만의 템플릿으로 다듬으세요.','마디 수·시간은 <b>128 BPM, 4/4</b> 기준입니다 (1마디 = 1.875초, 8마디 = 15초, 32마디 = 60초).','각 장 끝의 <b>앱 연결</b> 팁은 이 앱의 보이싱 랩·피아노 롤로 바로 실습하는 방법입니다.'])}`},
+ {g:'시작하기',id:'c-dna',t:'1. 장르의 DNA',h:`${tbl(['요소','일반적인 범위'],[['템포','124~128 BPM (멜로딕 프로그는 126~128이 가장 흔함)'],['키','마이너 키 비중이 높음 — 감성·에픽한 분위기'],['박자/그리드','4/4, 모든 변화가 4·8·16·32마디 단위'],['코드 루프','2~4개 코드, 코드당 1~2마디'],['그루브','4-on-the-floor 킥 + 오프비트 하이햇 + 사이드체인 펌핑'],['감정 곡선','긴장(빌드업) → 해방(드롭) → 회상(브레이크다운)의 반복']])}
+  <h3>핵심 구성 요소</h3>${ul(['<b>테마 멜로디</b> — 브레이크다운에서 소개되고 드롭에서 폭발하는 하나의 훅','<b>코드 진행</b> — 곡 전체를 관통하는 감정의 바닥 (섹션마다 같은 진행을 다른 옷으로)','<b>베이스 그루브</b> — 오프비트 또는 롤링 베이스 + 서브','<b>공간감</b> — 넓은 리버브·딜레이, 패드, 화이트 노이즈'])}`},
+ {g:'작곡',id:'c-key',t:'2. 키와 템포 정하기',h:`${ul(['보컬이 있으면 <b>보컬 음역</b>이 키를 결정합니다. 탑라인의 최고음이 너무 높지 않은 키로.','인스트루멘털이면 <b>서브 베이스가 단단한 키</b>(근음이 E1~A1 근처: E·F·F#·G·G#·A 마이너)가 유리합니다.','리드가 C5~C6에서 시원하게 뻗는 키를 고르면 드롭이 밝게 들립니다.','템포는 레퍼런스 곡에 맞추되, 감성 위주면 126, 페스티벌 에너지면 128.'])}
+  ${tip('이 앱 상단에서 키를 바꾸면 진행 전체가 자동으로 조옮김됩니다. 4~5개 키로 바꿔 들으며 리드 음역이 가장 시원한 키를 찾으세요.')}`},
+ {g:'작곡',id:'c-chords',t:'3. 코드 진행 설계',h:`<h3>기본 루프 고르기</h3>${ul(['i–VI–III–VII (Am–F–C–G): 가장 표준적인 감성 루프','VI–VII–i–i: 상승하며 해결 — 드롭 첫 코드에 힘이 실림','iv–VI–VII–i 류: 서브도미넌트에서 출발해 귀결감이 강함','IV–V–iii–vi (왕도 진행): 유포릭·애절'])}
+  <h3>같은 진행을 섹션마다 다르게 (리하모니제이션)</h3>${tbl(['섹션','변주 방법'],[['인트로','코드 없이 루트 패드 또는 1~2개 코드만'],['브레이크다운','add9·sus·7th 컬러, 슬래시 베이스(C/E)로 베이스 라인을 순차적으로'],['빌드업','마지막 코드를 sus4로 바꿔 긴장 유지, 또는 V(메이저)로'],['드롭','트라이어드 그대로 — 단순하고 강하게'],['드롭 2','차용 화음(iv→IV 등) 1개를 섞어 신선함']])}
+  ${ul(['코드 바뀌는 시점을 베이스가 1/8~1/16 먼저 바꾸는 <b>앤티시페이션</b>은 추진력을 줍니다.','4코드 루프의 4번째 코드를 2박씩 두 코드로 쪼개면(예: VII → V) 루프 끝에 변화가 생깁니다.'])}
+  ${tip('앱 연결: <b>진행 라이브러리</b>에서 불러온 뒤 <b>다음 코드 추천</b>으로 4번째 코드만 바꿔 보거나, 선택 코드의 <b>슬래시 베이스</b>로 브레이크다운용 변주를 만드세요.')}`},
+ {g:'작곡',id:'c-melody',t:'4. 탑라인(리드 멜로디) 작곡',h:`<h3>모티프 → 프레이즈 → 섹션</h3>${ol(['<b>1~2마디 모티프</b>: 리듬이 기억에 남는 짧은 동기. 3-3-2 싱코페이션이 장르의 단골 리듬.','<b>4마디 프레이즈</b>: 모티프(A) + 변형(A′). 같은 리듬, 음만 코드에 맞게 이동.','<b>8마디 문장</b>: A–A′–A–B. 마지막 B에서 음역을 올리거나 길게 끌어 해결.','<b>16마디</b>: 8마디 문장 × 2, 두 번째는 마지막 2마디를 바꿔 클라이맥스.'])}
+  <h3>음 고르기 원칙</h3>${ul(['강박(1·3박)과 긴 음에는 <b>코드톤</b>, 약박·짧은 음에는 스케일 음(경과음).','최고음은 프레이즈에서 한 번만 — 그 순간이 클라이맥스.','멜로디는 코드 보이싱의 <b>탑노트보다 위</b>(보통 C5~C6)에 두면 부딪히지 않습니다.','같은 음 반복 + 마지막 음만 도약하는 패턴은 단순하지만 강력한 훅.','콜 & 리스폰스: 2마디 질문 → 2마디 대답 (대답은 아래로 해결).'])}
+  ${tip('<b>노래 테스트</b>: 멜로디를 허밍으로 따라 부를 수 없으면 너무 복잡한 것입니다. 드롭 멜로디는 보컬 없이도 관객이 따라 부를 수 있어야 합니다.')}
+  ${tip('앱 연결: 피아노 롤의 <b>🎯 코드톤</b> 가이드를 켜고 강박에 초록(코드톤) 줄을 고르세요. <b>🧲 스케일 고정</b>을 켜면 키 밖 음을 실수로 찍지 않습니다.')}`},
+ {g:'작곡',id:'c-voicing',t:'5. 멜로디와 코드 보이싱의 관계',h:`${ul(['코드의 탑노트가 멜로디와 같은 음이거나 바로 아래에 있으면 멜로디가 묻힙니다 → 보이싱의 <b>음역(오른손)</b>을 내리거나 멜로디를 옥타브 올리기.','브레이크다운처럼 멜로디가 없는 구간에서는 코드 탑노트 자체가 멜로디 — <b>탑노트 라인</b>(↑↓)으로 노래하듯 이어지게.','드롭: 코드는 스탭(짧게), 멜로디는 길게 — 리듬으로도 역할을 분리.','멜로디의 긴 음이 코드의 3도·5도와 같으면 안정, 9도·4도(sus)면 감성적인 긴장.'])}
+  ${tip('앱 연결: 보이싱 랩의 <b>탑노트 라인 → 하강/최대한 같은 음</b>을 쓰면 브레이크다운 피아노가 자연스러운 선율을 갖습니다.')}`},
+ {g:'작곡',id:'c-bass',t:'6. 베이스라인 작법',h:`${tbl(['패턴','느낌','어울리는 섹션'],[['오프비트 8분','클래식 프로그, 펌핑','드롭, 그루브 파트'],['롤링 16분 (.xxx)','추진력, 딥/트랜스','인트로 후반, 드롭 2'],['롱노트 서스테인','웅장, 여유','브레이크다운 후반, 빌드업'],['옥타브 바운스','경쾌','팝 성향 드롭']])}
+  ${ul(['서브(사인)와 미드 베이스(소우)를 <b>같은 음, 다른 대역</b>으로 분리.','코드가 바뀌기 직전 마지막 16분에 다음 코드 루트를 미리 치는 <b>앤티시페이션</b>.','4·8마디 끝에서 옥타브 위로 튀거나 경과음으로 다음 루트에 접근하는 <b>필</b>.','킥과 서브가 같은 순간 울리지 않게 — 오프비트 배치나 사이드체인.'])}`},
+ {g:'작곡',id:'c-counter',t:'7. 카운터 멜로디 · 아르프 · 플럭',h:`${ul(['리드가 길게 끄는 음 사이사이를 채우는 <b>카운터 멜로디</b>(대답 역할).','아르페지오는 <b>리드와 다른 옥타브</b>(보통 C4~C5)에서 16분으로, 딜레이 3/16과 함께.','드롭 2에서는 드롭 1에 없던 카운터 라인을 추가해 "같지만 더 큰" 느낌을.','플럭은 브레이크다운 후반 → 빌드업에서 리듬 엔진으로 투입하면 긴장이 자연스럽게 쌓입니다.'])}`},
+ {g:'작곡',id:'c-groove',t:'8. 드럼 그루브',h:`${tbl(['요소','기본 위치','변주 아이디어'],[['킥','매 박 (4-on-the-floor)','빌드업 끝에서 8분/16분 킥 롤'],['클랩/스네어','2·4박','레이어 2~3개, 4마디 끝 플램'],['오픈 햇','오프비트 (8분 뒤)','드롭에서만 열기'],['클로즈 햇','16분','벨로시티 패턴으로 강약'],['라이드','오프비트 또는 4분','드롭 후반 에너지 추가'],['퍼커션','셰이커·탐·림','4·8마디 단위로 하나씩 추가/제거']])}
+  ${ul(['8마디마다 작은 필(스네어·탐·리버스 심벌)로 구간을 표시.','하이햇 벨로시티를 완전히 똑같이 두지 않기 — 기계적인 느낌 제거.'])}`},
+ {g:'편곡',id:'c-structure',t:'9. 곡 구조 템플릿 (익스텐디드 믹스)',h:`<p class="lead">DJ가 믹스하기 좋은 익스텐디드 믹스 기준 템플릿입니다. 레퍼런스 곡에 따라 섹션 길이는 조절하세요.</p>
+  ${tbl(['섹션','마디','위치 (마디)','시간 (128 BPM)','주요 내용'],[
+  ['인트로','32','1–32','0:00–1:00','드럼만 → 8마디마다 요소 추가 (DJ 믹스 구간)'],
+  ['그루브 / 빌드인','16','33–48','1:00–1:30','베이스 진입, 아르프·패드 살짝'],
+  ['브레이크다운 1','32','49–80','1:30–2:30','킥 제거, 피아노/패드로 코드·테마 소개'],
+  ['빌드업 1','16','81–96','2:30–3:00','스네어 롤, 라이저, 필터 상승'],
+  ['드롭 1','32','97–128','3:00–4:00','메인 리드 + 코드 스탭 + 베이스 풀 에너지'],
+  ['미드 브레이크','16','129–144','4:00–4:30','에너지 한 단계 낮춤, 그루브 유지'],
+  ['브레이크다운 2','16','145–160','4:30–5:00','짧고 감성적으로, 새 카운터 멜로디 암시'],
+  ['빌드업 2','16','161–176','5:00–5:30','빌드업 1보다 짧고 강하게'],
+  ['드롭 2','32','177–208','5:30–6:30','드롭 1 + 카운터 멜로디/옥타브 업'],
+  ['아웃트로','32','209–240','6:30–7:30','드럼과 베이스로 정리 (DJ 믹스 구간)']])}
+  <h3>라디오 에딧 (약 3분)</h3>${tbl(['섹션','마디'],[['인트로','8'],['브레이크다운','16'],['빌드업','8'],['드롭','16'],['브레이크','8'],['빌드업','8'],['드롭 2','16'],['아웃트로','8']])}
+  ${tip('익스텐디드 믹스를 먼저 완성한 뒤 라디오 에딧을 잘라 만드는 순서가 효율적입니다.')}`},
+ {g:'편곡',id:'c-introsec',t:'10. 인트로',h:`${ul(['첫 16~32마디는 <b>DJ가 믹스할 수 있게</b> 킥·햇·퍼커션 위주로 단순하게.','8마디마다 정확히 하나씩: 햇 → 클랩 → 퍼커션 → 베이스(필터 닫힌) → 아르프 → 패드.','테마 멜로디는 필터를 닫거나 일부만 — 브레이크다운을 위해 아껴 두기.','인트로 끝 2마디에서 리버스 심벌이나 작은 필로 다음 섹션 예고.'])}`},
+ {g:'편곡',id:'c-breakdown',t:'11. 브레이크다운',h:`${ul(['<b>킥을 빼는 순간</b>이 곡의 감정이 시작되는 지점. 크래시 + 리버브 꼬리로 열기.','피아노/패드로 코드 진행을 먼저 들려주고(8~16마디), 다음에 테마 멜로디를 얹기.','보컬이 있다면 여기서 가사의 핵심을 전달.','후반부에 플럭/아르프를 조금씩 투입해 빌드업으로 자연스럽게 연결.','하이패스 필터를 서서히 올려 저역을 비워 두면 드롭의 저역이 더 크게 느껴집니다.'])}
+  ${tip('앱 연결: <b>피아노 브레이크다운</b> 또는 <b>와이드 스프레드</b> 보이싱 + 벨로시티 <b>피아니스트</b> 프리셋. 롤(펼침)을 10~20ms로 살짝 올리면 실제 피아노 같은 감성이 납니다.')}`},
+ {g:'편곡',id:'c-build',t:'12. 빌드업 기법 사전',h:`${tbl(['기법','방법','길이'],[
+  ['스네어 롤 가속','4분 → 8분 → 16분 → 32분, 벨로시티도 점점 강하게','8~16마디'],
+  ['화이트 노이즈 라이저','하이패스 컷오프 상승 + 볼륨 상승','8~16마디'],
+  ['필터 스윕','리드·코드 로우패스 컷오프를 서서히 열기','8~16마디'],
+  ['피치 라이저','신스/노이즈 피치를 +12반음 상승','4~8마디'],
+  ['킥 롤','마지막 2~4마디 킥을 8분 → 16분으로','2~4마디'],
+  ['리듬 압축','코드 스탭 간격을 점점 촘촘하게','4~8마디'],
+  ['볼륨 딥','빌드업 마지막 1마디 전체 볼륨을 살짝 낮춤','1마디'],
+  ['리버스 심벌/스웰','드롭 첫 박에 정확히 끝나게','1~2마디'],
+  ['무음 (프리드롭)','드롭 직전 1박~1마디를 비우거나 보컬 한 줄만','1박~1마디']])}
+  ${warn('모든 기법을 한 번에 쓰면 오히려 평평해집니다. 빌드업 1에는 3~4개, 빌드업 2에는 다른 조합으로.')}`},
+ {g:'편곡',id:'c-drop',t:'13. 드롭',h:`${ul(['첫 박: <b>크래시 + 임팩트 + 서브 붐</b>으로 확실하게 열기.','레이어: 킥, 베이스(서브+미드), 코드 스탭, 메인 리드, 플럭/아르프, 탑 퍼커션.','8마디마다 변화: 8마디 = 기본, 다음 8마디 = 라이드/퍼커션 추가, 다음 = 카운터 멜로디, 마지막 8마디 = 필 + 다음 섹션 예고.','드롭 2는 드롭 1과 같은 테마 + <b>새로운 요소 1~2개</b>(옥타브 업 리드, 카운터 멜로디, 다른 베이스 패턴, 차용 화음).'])}
+  ${tip('앱 연결: <b>슈퍼소우 드롭</b> 또는 <b>옥타브 더블 클로즈</b> 보이싱 + 주법 <b>오프비트 8분 / 3-3-2 싱코</b> + 벨로시티 <b>드롭 스탭</b>.')}`},
+ {g:'편곡',id:'c-energy',t:'14. 에너지 곡선 & 요소 맵',h:`<p>각 섹션에서 어떤 요소가 울리는지 한눈에 설계하세요 (● 있음, ◐ 필터/일부, ○ 없음).</p>
+  ${tbl(['요소','인트로','브레이크','빌드업','드롭','아웃트로'],[['킥','●','○','◐ (후반 롤)','●','●'],['클랩/햇','●','○','◐','●','●'],['서브/베이스','◐','○','○','●','●'],['코드','○','● (피아노/패드)','●','● (스탭)','○'],['리드 멜로디','○','◐ (소개)','◐ (필터)','●','○'],['아르프/플럭','◐','◐','●','●','◐'],['패드','◐','●','●','◐','◐'],['FX/라이저','◐','◐','●','◐ (임팩트)','◐']])}
+  ${ul(['에너지 레벨(1~10)을 섹션마다 숫자로 정해 두면 편곡이 흔들리지 않습니다. 예: 인트로 4 → 그루브 5 → 브레이크 3 → 빌드업 7 → 드롭 10 → 미드 6 → 브레이크2 4 → 빌드업2 8 → 드롭2 10 → 아웃트로 5.'])}`},
+ {g:'편곡',id:'c-fx',t:'15. 트랜지션 & FX 사전',h:`${tbl(['FX','용도','배치'],[['업리프터(라이저)','긴장 상승','빌드업 전체'],['다운리프터','에너지 하강, 섹션 마무리','드롭/브레이크 첫 박부터 2~4마디'],['임팩트/붐','새 섹션 강조','섹션 첫 박'],['리버스 심벌','다음 섹션 예고','섹션 직전 1~2마디'],['스웰/노이즈 스윕','공간 전환','브레이크다운 진입'],['테이프 스톱','강한 정지 효과','프리드롭'],['필터 스윕 (오토메이션)','부드러운 전환','4~16마디'],['보컬 찹/숨소리','인간적인 긴장','프리드롭 1박']])}`},
+ {g:'편곡',id:'c-8bar',t:'16. 8마디 법칙과 변화 주기',h:`${ul(['리스너는 <b>8마디 단위</b>로 변화를 기대합니다. 큰 변화는 섹션(16·32마디), 작은 변화는 4·8마디마다.','변화는 항상 <b>마디 첫 박</b>에 — 앞 마디 끝의 필이 예고.','"추가 또는 제거" 둘 다 변화입니다. 요소를 빼는 것이 더 극적일 때가 많습니다.','같은 8마디를 그대로 4번 반복하지 말 것 — 최소한 마지막 8마디는 필이나 레이어 변화.'])}`},
+ {g:'편곡',id:'c-vocal',t:'17. 보컬과 함께 편곡하기',h:`${ul(['보컬 구간에서는 리드를 빼거나 보컬 사이 빈자리에만 <b>콜 & 리스폰스</b>로.','보컬 음역(보통 C4~C5)과 코드 보이싱 오른손이 겹치면 보이싱 음역을 낮추거나 하이 패드로.','드롭에서 보컬 찹(가사 일부를 잘라 리드처럼)으로 테마를 이어 가기.','보컬 키에 맞춰 곡 키 결정 — 억지 피치 시프트는 음질 손상.'])}`},
+ {g:'편곡',id:'c-fl',t:'18. FL Studio 편곡 워크플로',h:`${ol(['<b>8마디 루프부터</b>: 패턴 하나에 드롭의 핵심(코드·리드·베이스·드럼)을 완성.','<b>패턴 분리</b>: 악기별·역할별로 패턴을 나누고 이름/색 지정 (드럼, 베이스, 코드, 리드, FX).','<b>플레이리스트에 섹션 배치</b>: 템플릿(9장)대로 패턴 클립을 깔고, 타임라인 마커로 섹션 이름 표시.','<b>변주는 Make unique</b>: 드롭 2처럼 바꿀 클립은 패턴 클립 메뉴의 Make unique로 복제 후 수정.','<b>오토메이션 클립</b>: 필터·볼륨·리버브 Send를 노브 우클릭 → Create automation clip으로.','<b>FX 트랙</b>: 라이저·임팩트·리버스 심벌을 별도 트랙으로 모아 섹션 경계에 배치.','<b>전체 듣기</b>: 처음부터 끝까지 멈추지 않고 들으며 지루한 곳 메모 → 요소 추가/제거.'])}
+  ${tip('앱 연결: 이 앱에서 섹션별 코드 MIDI(브레이크다운용 피아노 보이싱, 드롭용 슈퍼소우 보이싱)를 따로 내보내 각각의 패턴으로 쓰면 편곡이 빨라집니다.')}`},
+ {g:'편곡',id:'c-ref',t:'19. 레퍼런스 곡 분석법',h:`${ol(['레퍼런스 곡을 플레이리스트에 올리고 템포를 맞춘 뒤 마디 그리드에 정렬.','섹션 경계마다 마커를 찍고 이름 붙이기 (인트로/브레이크/빌드/드롭).','각 섹션에서 들리는 요소를 14장의 요소 맵 표로 적기.','빌드업에서 쓴 기법을 12장 표에서 체크.','내 곡을 같은 구조로 깔아 보고, 다른 점을 의도적으로 하나씩 만들기.'])}`},
+ {g:'편곡',id:'c-routine',t:'20. 작업 루틴 & 루프 함정 탈출',h:`${ol(['<b>1일차</b>: 키·템포·코드 진행·탑라인 (이 앱으로 30분 안에)','<b>2일차</b>: 드롭 8마디 루프 사운드 완성','<b>3일차</b>: 곡 구조 전체 배치 (템플릿대로 일단 다 채우기)','<b>4일차</b>: 트랜지션·FX·오토메이션','<b>5일차</b>: 러프 믹스 → 하루 쉬고 수정'])}
+  <h3>8마디 루프에서 못 벗어날 때</h3>${ul(['루프가 80% 완성이면 바로 <b>곡 구조로 펼치기</b> — 완벽한 루프는 편곡 중에 완성됩니다.','드롭을 먼저 만들었다면 브레이크다운은 <b>드롭에서 요소를 빼서</b> 만들기.','타이머를 걸고 "구조만" 20분 안에 끝까지 깔기.'])}`},
+ {g:'부록',id:'c-check',t:'21. 작편곡 체크리스트',h:ol(['테마 멜로디를 허밍으로 따라 부를 수 있는가?','코드 진행이 섹션마다 다른 옷(보이싱·리듬·컬러)을 입었는가?','모든 변화가 4·8·16마디 경계에서 일어나는가?','인트로·아웃트로가 DJ 믹스하기 좋게 단순한가?','빌드업 1과 2가 서로 다른 기법 조합인가?','드롭 2에 드롭 1에 없던 요소가 있는가?','에너지 곡선이 레퍼런스와 비슷한 흐름인가?','브레이크다운에서 저역을 비워 드롭의 대비를 만들었는가?','처음부터 끝까지 듣는 동안 지루한 8마디가 없는가?','라디오 에딧 버전도 만들었는가?'])}
+];
+
+/* ============ 명곡 분석 라이브러리 ============
+   ✔ 키·템포·섹션별 코드 진행 = 아래 출처에서 확인한 값만 사용
+   ✎ 재현 가이드(송폼·주법·보이싱·악기 구성) = 장르 관습 기반 제안 (원곡 분석 아님)
+   코드 표기: 로마숫자:품질/베이스  (예: VI:maj7, i:min/3 = 1전위, IV:maj/5 = 2전위, :5 = 3도 없음) */
+const HT='https://www.hooktheory.com/theorytab/view/';
+const SONGS = [
+ {t:'Levels',a:'Avicii',key:[1,'min'],bpm:null,style:'piano',src:'https://blog.native-instruments.com/edm-chord-progressions/',srcName:'Native Instruments 블로그',
+  sec:[{n:'메인 테마',o:'i – III – VII – VI',c:'i III VII VI'}]},
+ {t:'Save The World',a:'Swedish House Mafia',key:[9,'min'],bpm:127,style:'festival',src:HT+'swedish-house-mafia/save-the-world',
+  sec:[{n:'코러스',o:'i – III – VI – i – III',c:'i III VI i III'}]},
+ {t:"Don't You Worry Child",a:'Swedish House Mafia',key:[2,'maj'],bpm:128,style:'festival',src:HT+'swedish-house-mafia/dont-you-worry-child',
+  sec:[{n:'인트로 / 벌스',bpm:129,o:'vi⁶ – I – vi⁶ – iii⁶ – IV⁶',c:'vi:min/3 I vi:min/3 iii:min/3 IV:maj/3'},{n:'프리코러스 & 코러스',bpm:128,o:'V – vi – I⁶ – IV – I⁶',c:'V vi I:maj/3 IV I:maj/3'},{n:'코러스 (후렴 끝)',bpm:130,o:'V – vi⁶⁴',c:'V vi:min/5'}]},
+ {t:'Miami 2 Ibiza',a:'Swedish House Mafia',key:[7,'min'],bpm:125,style:'festival',src:HT+'swedish-house-mafia/miami-2-ibiza',
+  sec:[{n:'코러스',o:'vsus4 – III7 – VI – VIIsus2sus4 – i',c:'v:sus4 III:maj7 VI VII:sus4 i',note:'VIIsus2sus4는 이 앱에서 sus4로 근사'}]},
+ {t:'ID2',a:'Avicii',key:[3,'min'],bpm:128,style:'piano',src:HT+'avicii/id2',
+  sec:[{n:'코러스',o:'i(no3) – III(no3) – VI(no3) – VII(no3)',c:'i:5 III:5 VI:5 VII:5',note:'3도 없는 파워 코드'}]},
+ {t:'Silhouettes',a:'Avicii',key:[5,'min'],bpm:128,style:'piano',src:HT+'avicii/silhouettes',
+  sec:[{n:'인트로 / 벌스',o:'VI7 – VII(add6) – i – v7',c:'VI:maj7 VII:6 i v:m7'},{n:'프리코러스',o:'VI – i7 – VII(add9) – i⁶⁴',c:'VI i:m7 VII:add9 i:min/5'},{n:'코러스',o:'VI – VII11 – i7 – VII⁶(add9)',c:'VI VII:7sus4 i:m7 VII:add9/3',note:'VII11은 7sus4로 근사'}]},
+ {t:'Wake Me Up',a:'Avicii',key:[11,'min'],bpm:124,style:'folk',src:HT+'avicii/wake-me-up',
+  sec:[{n:'인트로 / 프리코러스',o:'i – VI – III – VII⁶ – i',c:'i VI III VII:maj/3 i'},{n:'벌스 / 브릿지',bpm:126,o:'i – VI – III',c:'i VI III'},{n:'코러스',o:'i – VI – III – VII – i',c:'i VI III VII i'}]},
+ {t:'Hey Brother',a:'Avicii',key:[7,'min'],bpm:125,style:'folk',src:HT+'avicii/hey-brother',
+  sec:[{n:'인트로 / 벌스',o:'i – VI – III – VII',c:'i VI III VII'},{n:'프리코러스',o:'VII – III – VI – VII – i⁶⁵',c:'VII III VI VII i:m7/3'},{n:'코러스',bpm:126,o:'i – VI – III – v⁶⁴ – i',c:'i VI III v:min/5 i'},{n:'인스트루멘털',o:'i – VI – VII – i – III',c:'i VI VII i III'}]},
+ {t:'Waiting For Love',a:'Avicii',key:[6,'min'],bpm:128,style:'folk',src:HT+'avicii/waiting-for-love',
+  sec:[{n:'인트로',o:'i – V – VI – VIIsus2',c:'i V VI VII:sus2'},{n:'벌스',o:'i – vsus4 – VI – VIIsus2',c:'i v:sus4 VI VII:sus2'},{n:'코러스',o:'VI – III⁶ – i',c:'VI III:maj/3 i'}]},
+ {t:'Without You',a:'Avicii',key:[11,'min'],bpm:134,style:'folk',src:HT+'avicii/without-you',
+  sec:[{n:'코러스',o:'VI – VII – i – III – VI',c:'VI VII i III VI'}]},
+ {t:'Fade Into Darkness',a:'Avicii',key:[6,'maj'],bpm:126,style:'piano',src:HT+'avicii/fade-into-darkness',
+  sec:[{n:'인트로',o:'I – vi – V – IV – ii',c:'I vi V IV ii'},{n:'코러스',o:'vi – Vsus4 – IV – ii – I⁶',c:'vi V:sus4 IV ii I:maj/3'}]},
+ {t:'For A Better Day (KSHMR Remix)',a:'Avicii',key:[2,'min'],bpm:124,style:'festival',src:HT+'avicii/for-a-better-day---kshmr-remix',
+  sec:[{n:'코러스',o:'i – VII – VI – VII – III',c:'i VII VI VII III'}]},
+ {t:'Beautiful Heartbeat (Avicii Remix)',a:'MORTEN',key:[5,'maj'],bpm:130,style:'piano',src:HT+'morten/beautiful-heartbeat---avicii-remix',
+  sec:[{n:'코러스',o:'IV – Vsus4 – I – Vsus4 – IV⁶⁵',c:'IV V:sus4 I V:sus4 IV:maj7/3'}]},
+ {t:'Set Me Free (Avicii Remix)',a:'Phonat',key:[6,'min'],bpm:127,style:'piano',src:HT+'phonat/set-me-free---avicii-remix',
+  sec:[{n:'코러스',o:'i – VII⁶ – III – VII⁶ – IV⁶⁴',c:'i VII:maj/3 III VII:maj/3 IV:maj/5',note:'IV(메이저)는 도리안 차용'}]},
+ {t:'Heroes',a:'Alesso',key:[5,'maj'],bpm:128,style:'vocal',src:HT+'alesso/heroes',
+  sec:[{n:'프리코러스 & 코러스',o:'I – iii7 – vi – IV',c:'I iii:m7 vi IV'},{n:'코러스',o:'I – iii – vi – IV',c:'I iii vi IV'},{n:'브릿지',o:'IV – iii7 – vi – I – IV',c:'IV iii:m7 vi I IV'}]},
+ {t:'Sweet Escape',a:'Alesso',key:[2,'maj'],bpm:125,style:'vocal',src:HT+'alesso/sweet-escape',
+  sec:[{n:'인트로 / 벌스',bpm:128,o:'IV7sus2 – vi7 – I⁶⁴',c:'IV:sus2 vi:m7 I:maj/5',note:'IV7sus2는 sus2로 근사'},{n:'코러스',o:'IV – vi – I – V',c:'IV vi I V'}]},
+ {t:'Cool',a:'Alesso',key:[9,'maj'],bpm:128,style:'vocal',src:HT+'alesso/cool-feat-roy-english',
+  sec:[{n:'프리코러스 & 코러스',o:'IV – I – ii7 – V – vi',c:'IV I ii:m7 V vi'}]},
+ {t:'Calling (Lose My Mind)',a:'Sebastian Ingrosso & Alesso',key:[1,'min'],bpm:128,style:'festival',src:HT+'sebastian-ingrosso-and-alesso/calling---lose-my-mind',
+  sec:[{n:'벌스',o:'i – VI – VIIsus4 – i – iv',c:'i VI VII:sus4 i iv'},{n:'프리코러스 / 코러스',bpm:124,o:'VI – VIIsus4 – i – iv',c:'VI VII:sus4 i iv'}]},
+ {t:'More Than You Know',a:'Axwell Λ Ingrosso',key:[5,'min'],bpm:128,style:'vocal',src:HT+'axwell-and-ingrosso/more-than-you-know',
+  sec:[{n:'코러스',o:'i – VI – III – iv',c:'i VI III iv'},{n:'브릿지',o:'i – VI – III⁶ – VII',c:'i VI III:maj/3 VII'}]},
+ {t:'Under Control',a:'Calvin Harris & Alesso',key:[5,'min'],bpm:128,style:'vocal',src:HT+'calvin-harris-alesso/under-control',
+  sec:[{n:'코러스',o:'VI – iv7 – i – VII',c:'VI iv:m7 i VII'}]},
+ {t:'Inside Our Hearts',a:'Martin Garrix & Alesso',key:[8,'min'],bpm:128,style:'festival',src:HT+'martin-garrix-and-alesso/inside-our-hearts-ft-shaun-farrugia',
+  sec:[{n:'인스트루멘털 (드롭)',o:'i – VII – VI – VII – i',c:'i VII VI VII i'}]},
+ {t:'Clarity (Vicetone Remix)',a:'Zedd',key:[5,'min'],bpm:128,style:'dark',src:HT+'zedd-ft-foxes/clarity-vicetone-remix-',
+  sec:[{n:'코러스',o:'III – VII – i – VI',c:'III VII i VI'}]},
+ {t:'Synchronize',a:'Tom Swoon & Paris Blohm',key:[5,'min'],bpm:128,style:'dark',src:HT+'tom-swoon-and-paris-blohm/synchronize',
+  sec:[{n:'코러스',o:'VI – VII – i – VII⁶ – VI',c:'VI VII i VII:maj/3 VI'}]},
+ {t:'Legacy (Vicetone Remix)',a:'Nicky Romero & Krewella',key:[0,'min'],bpm:128,style:'dark',src:HT+'nicky-romero-and-krewella/legacy---vicetone-remix',
+  sec:[{n:'코러스',o:'i – VII – VI – VII',c:'i VII VI VII'}]}
+];
+/* "VI:maj7/3" → 슬롯 (키 기준 상대) */
+function parseSongTok(tok,mode){
+  const m=tok.match(/^([b#]?)(VII|VI|IV|V|III|II|I|vii|vi|iv|v|iii|ii|i)(?::([^/]+))?(?:\/(\d))?$/); if(!m) return null;
+  const acc=m[1]==='b'?-1:m[1]==='#'?1:0, rn=m[2], up=rn===rn.toUpperCase();
+  const off=pcOf(SCALE_OF(mode)[ROMAN_U.indexOf(rn.toUpperCase())]+acc);
+  let q=m[3]||(up?'maj':'min'); if(q==='min'&&up) q='min';
+  const iv=QUAL[q].iv; let bass=null;
+  if(m[4]==='3') bass=pcOf(off+(iv.includes(4)?4:iv.includes(3)?3:iv[1]));
+  if(m[4]==='5') bass=pcOf(off+(iv.includes(7)?7:iv.includes(6)?6:iv[2]||7));
+  return {r:off,q,bass};
+}
+function songSlots(song,si){ return song.sec[si].c.split(/\s+/).map(t=>parseSongTok(t,song.key[1])).filter(Boolean).map(c=>Object.assign(slotFrom(c),{beats:4})); }
+
+/* ---------- 재현 가이드 (장르 관습 기반 제안) ---------- */
+const STYLE_KO={piano:'피아노 중심 프로그레시브',folk:'포크/어쿠스틱 하우스 크로스오버',festival:'페스티벌 프로그레시브 앤썸',vocal:'보컬 프로그레시브 / 팝 하우스',dark:'멜로딕 마이너 프로그레시브'};
+const STYLE_FORM={
+ piano:[
+  ['인트로','16–32','드롭 진행 (루트 패드만)','와이드 스프레드','블록','패드','킥·햇·퍼커션 + 필터 닫힌 피아노 아르프','DJ 믹스 구간. 8마디마다 한 요소씩'],
+  ['브레이크다운','16–32','벌스/인트로 진행 (있으면) 또는 드롭 진행 + add9','피아노 브레이크다운','2분음표 → 블록','피아니스트','피아노(메인), 패드, 리버브 크게, 킥 없음','피아노가 테마를 처음 소개. 탑노트 라인을 노래하듯'],
+  ['빌드업','8–16','드롭 진행, 마지막 코드 sus4','프로그레시브 스탠다드','4분 → 8분 가속','빌드업 크레센도','피아노 플럭, 스네어 롤, 화이트 노이즈 라이저, 필터 상승','마지막 1박 무음'],
+  ['드롭','16–32','코러스/메인 진행 (✔ 확인 진행)','슈퍼소우 드롭','오프비트 8분 / 하우스 피아노','드롭 스탭','피아노 플럭 리드 + 슈퍼소우 레이어, 오프비트 베이스, 서브, 풀 드럼','리드가 피아노 플럭 음색 — 이 스타일의 핵심'],
+  ['브레이크 2','16','브레이크다운 진행 변주','피아노 브레이크다운','블록','피아니스트','피아노 + 보컬/패드','짧고 감성적으로'],
+  ['드롭 2','16–32','드롭 진행 + 차용 화음 1개','옥타브 더블 클로즈','3-3-2 싱코','드롭 스탭','드롭 1 + 카운터 멜로디, 라이드','같은 테마, 더 크게'],
+  ['아웃트로','16–32','루트 또는 드롭 진행 블록','프로그레시브 스탠다드','블록','패드','드럼 + 베이스 + 패드','DJ 믹스 구간']],
+ folk:[
+  ['인트로','8–16','벌스 진행','피아노 브레이크다운','블록 / 기타 스트럼 리듬','피아니스트','어쿠스틱 기타(스트럼) 또는 피아노, 보컬','라디오 지향 — 인트로 짧게'],
+  ['벌스','16','벌스 진행 (✔ 있으면)','피아노 브레이크다운','2분음표','피아니스트','보컬 + 어쿠스틱 기타/피아노, 가벼운 퍼커션','포크·컨트리 감성의 노래 중심'],
+  ['프리코러스','8','프리코러스 진행 (✔ 있으면)','프로그레시브 스탠다드','4분음표','빌드업 크레센도','패드·스트링 추가, 스네어 롤 시작','코드 리듬을 촘촘하게'],
+  ['코러스 / 드롭','16','코러스 진행 (✔ 확인 진행)','슈퍼소우 드롭','오프비트 8분','드롭 스탭','피아노 플럭 리드(보컬 멜로디를 신스로), 슈퍼소우 코드, 베이스, 4/4 킥','보컬 후렴 → 같은 멜로디를 신스 리드로'],
+  ['브릿지','8–16','브릿지/벌스 진행','와이드 스프레드','블록','패드','보컬 + 패드, 킥 없음','다음 드롭 전 숨 고르기'],
+  ['마지막 드롭','16','코러스 진행','옥타브 더블 클로즈','3-3-2 싱코','드롭 스탭','풀 레이어 + 카운터 멜로디','가장 큰 에너지'],
+  ['아웃트로','8','코러스 진행 블록','프로그레시브 스탠다드','블록','패드','기타/피아노 + 보컬 에코','라디오 에딧 길이']],
+ festival:[
+  ['인트로','32','드롭 진행 (필터 닫힘)','프로그레시브 스탠다드','오프비트 8분 (필터 닫힘)','드롭 스탭','킥·클랩·햇, 필터 닫힌 코드 스탭, 퍼커션','페스티벌용 — 길게, 에너지 일정'],
+  ['브레이크다운','16–32','벌스/인트로 진행 (✔ 있으면) 또는 드롭 진행 + 컬러','와이드 스프레드 → 피아노','블록 / 2분음표','피아니스트','보컬 + 피아노/패드, 스트링, 대형 리버브','앤썸 보컬의 핵심 가사 구간'],
+  ['빌드업','16','프리코러스/드롭 진행, 마지막 sus4','프로그레시브 스탠다드','4분 → 8분 → 16분 가속','빌드업 크레센도','슈퍼소우 코드(필터 상승), 스네어 롤, 라이저, 크라우드 보컬','보컬 한 줄 남기고 무음 → 드롭'],
+  ['드롭','32','코러스 진행 (✔ 확인 진행)','슈퍼소우 드롭','오프비트 8분','드롭 스탭','슈퍼소우 리드 + 옥타브 레이어, 슈퍼소우 코드, 오프비트 베이스, 서브, 라이드','넓고 밝게. 리드는 보컬 멜로디를 신스로'],
+  ['미드 브레이크','16','드롭 진행 블록','와이드 스프레드','블록','패드','패드, 보컬 찹, 킥 없음','에너지 한 단계 낮춤'],
+  ['드롭 2','32','드롭 진행 + 차용/서스 변주','옥타브 더블 클로즈','3-3-2 싱코','드롭 스탭','드롭 1 + 카운터 멜로디, 옥타브 업 리드','마지막 8마디 필로 마무리'],
+  ['아웃트로','32','드롭 진행 (필터 닫힘)','프로그레시브 스탠다드','오프비트 8분','드롭 스탭','드럼 + 베이스 + 필터 코드','DJ 믹스 구간']],
+ vocal:[
+  ['인트로','8–16','코러스 진행 (패드)','와이드 스프레드','블록','패드','패드, 보컬 찹, 가벼운 퍼커션','짧게 — 보컬로 빨리 진입'],
+  ['벌스','16','벌스 진행 (✔ 있으면) 또는 코러스 진행 2분음표','피아노 브레이크다운','2분음표','피아니스트','보컬 + 피아노/일렉피아노, 미니멀 드럼','보컬 공간 확보 — 코드는 보컬 아래 음역'],
+  ['프리코러스','8','프리코러스 진행 (✔ 있으면)','프로그레시브 스탠다드','4분 → 8분','빌드업 크레센도','스트링·패드, 스네어 롤, 라이저','긴장 쌓기'],
+  ['코러스 (보컬 훅)','16','코러스 진행 (✔ 확인 진행)','프로그레시브 스탠다드','하우스 피아노 / 오프비트','그루브','보컬 + 피아노 코드 + 베이스 + 4/4 킥','보컬이 주인공 — 코드는 리듬 위주'],
+  ['드롭 (인스트루멘털)','16','코러스 진행','슈퍼소우 드롭','오프비트 8분 / 3-3-2','드롭 스탭','플럭/보컬 찹 리드, 슈퍼소우 코드, 베이스','보컬 멜로디를 플럭으로 재해석'],
+  ['브릿지','8','브릿지 진행 (✔ 있으면)','와이드 스프레드','블록','패드','보컬 + 패드','감정 전환'],
+  ['마지막 코러스 + 드롭','16–32','코러스 진행','옥타브 더블 클로즈','3-3-2 싱코','드롭 스탭','풀 레이어 + 보컬 애드립','클라이맥스']],
+ dark:[
+  ['인트로','32','드롭 진행 (루트만)','프로그레시브 스탠다드','롤링 / 오프비트 (필터 닫힘)','그루브','킥, 롤링 베이스, 햇, 다크 패드','어둡고 추진력 있게'],
+  ['브레이크다운','16–32','드롭 진행 + m7/add9 컬러','와이드 스프레드','블록','피아니스트','피아노 또는 플럭 + 대형 패드, 보컬','마이너 감성 — 탑노트 하강 라인'],
+  ['빌드업','16','드롭 진행, 마지막 V(메이저) 또는 sus4','프로그레시브 스탠다드','4분 → 16분','빌드업 크레센도','플럭 아르프(필터 상승), 스네어 롤, 라이저','하모닉 마이너 V로 긴장 극대화'],
+  ['드롭','32','코러스 진행 (✔ 확인 진행)','슈퍼소우 드롭','3-3-2 싱코 / 오프비트','드롭 스탭','슈퍼소우 리드, 플럭 레이어, 롤링 베이스, 서브, 풀 드럼','마이너 진행의 에픽함'],
+  ['미드 브레이크','16','드롭 진행 블록','와이드 스프레드','블록','패드','패드, FX','숨 고르기'],
+  ['드롭 2','32','드롭 진행 변주','옥타브 더블 클로즈','3-3-2 싱코','드롭 스탭','드롭 1 + 옥타브 업 리드, 카운터','더 크게'],
+  ['아웃트로','32','루트','프로그레시브 스탠다드','롤링','그루브','드럼 + 베이스','DJ 믹스 구간']]
+};
+let SONGQ='', SONGSEL=0;
+function renderSongs(){
+  const root=$('#v-songs'); root.innerHTML='';
+  const toc=h('div',{class:'gtoc'}), body=h('article',{class:'gbody'});
+  const q=h('input',{type:'search',placeholder:'곡·아티스트 검색…',value:SONGQ,oninput:e=>{SONGQ=e.target.value; draw();}});
+  toc.append(h('div',{class:'gtitle'},'🎧 명곡 분석',h('small',null,'출처로 코드 진행을 확인한 멜로딕 프로그레시브 하우스 '+SONGS.length+'곡')),q);
+  const list=h('div'); toc.append(list);
+  const draw=()=>{ list.innerHTML=''; const qq=SONGQ.toLowerCase(); let g=null;
+    SONGS.map((s,i)=>[s,i]).filter(([s])=>!qq||(s.t+s.a).toLowerCase().includes(qq)).sort((x,y)=>x[0].a.localeCompare(y[0].a)).forEach(([s,i])=>{
+      if(s.a!==g){ g=s.a; list.append(h('div',{class:'ggrp'},g)); }
+      list.append(h('div',{class:'gitem'+(i===SONGSEL?' on':''),onclick:()=>{ SONGSEL=i; renderSongs(); }},s.t,h('span',{style:'float:right;color:var(--dim);font-size:10.5px'},keyName(s.key[0],s.key[1])))); }); };
+  draw();
+  const s=SONGS[SONGSEL]; const key={root:s.key[0],mode:s.key[1]};
+  body.append(h('div',{class:'gcat'},STYLE_KO[s.style]),h('h2',null,s.t),h('p',{class:'lead'},s.a+' · '+keyLabel(key)+(s.bpm?' · '+s.bpm+' BPM':'')+' · 4/4'));
+  body.append(h('div',{class:'okbox'},'✔ 확인된 정보 — 출처: ',h('a',{href:s.src,target:'_blank',rel:'noopener'},s.srcName||'Hooktheory TheoryTab'),' (커뮤니티 분석 데이터이며, 이 앱은 키·템포·섹션별 코드만 사용합니다)'));
+  const tb=h('table',null,h('tr',null,h('th',null,'섹션'),h('th',null,'원본 표기'),h('th',null,'실제 코드 ('+keyName(s.key[0],s.key[1])+')'),h('th',null,'')));
+  s.sec.forEach((sc,si)=>{ const sl=songSlots(s,si); const names=sl.map(c=>chordName(key.root+c.r,c.q,c.bass!=null?key.root+c.bass:null)).join(' – ');
+    tb.append(h('tr',null,h('td',null,h('b',null,sc.n),sc.bpm?h('div',{style:'color:var(--dim);font-size:11px'},sc.bpm+' BPM'):null),h('td',null,sc.o,sc.note?h('div',{style:'color:var(--dim);font-size:11px'},'※ '+sc.note):null),
+      h('td',{style:'color:var(--acc);font-weight:700'},names),
+      h('td',null,h('div',{class:'btnrow',style:'margin:0'},
+        h('button',{class:'sm','data-hint':'현재 보이싱 스타일로 듣기',onclick:()=>{ const vv=voiceProgression(sl,key,S.V); ensureAudio(); vv.forEach((c,i)=>setTimeout(()=>audition(c.notes.map(n=>({p:n.p,v:n.role==='top'?110:n.role==='lh'?96:82})),0.95),i*700)); }},'▶'),
+        h('button',{class:'sm pri','data-hint':'이 키·템포·진행을 보이싱 랩으로 불러오기',onclick:()=>{ pushUndo(); S.key=key; if(s.bpm) S.bpm=sc.bpm||s.bpm; S.slots=sl; S.sel=0; S.sync=true; setView('lab'); changed({left:true}); syncTop(); toast('📥 '+s.t+' — '+sc.n+' 불러옴'); }},'불러오기'),
+        h('button',{class:'sm red','data-hint':'이 진행으로 섹션별 변주(인트로~아웃트로) 만들기',onclick:()=>{ pushUndo(); S.key=key; if(s.bpm) S.bpm=s.bpm; S.slots=songSlots(s,s.sec.length-1>0?s.sec.findIndex(x=>/코러스|드롭|인스트루/.test(x.n))>=0?s.sec.findIndex(x=>/코러스|드롭|인스트루/.test(x.n)):0:0); S.sel=0; S.sync=true; changed({left:true}); syncTop(); showSections(); }},'섹션 변주'))))); });
+  body.append(h('h3',null,'✔ 섹션별 코드 진행'),tb);
+  // 분석
+  const allSl=s.sec.map((x,i)=>songSlots(s,i)); const fns={T:0,S:0,D:0,B:0}; let inv=0, ext=0, sus=0;
+  allSl.flat().forEach(c=>{ fns[funcOf(c.r,key.mode)]++; if(c.bass!=null) inv++; if(!['maj','min'].includes(c.q)) ext++; if(/sus/.test(c.q)) sus++; });
+  body.append(h('h3',null,'✔ 화성 분석 (확인된 진행 기준)'),h('ul',null,
+    h('li',null,'코드 기능 분포 — 토닉 '+fns.T+' · 서브도미넌트 '+fns.S+' · 도미넌트 '+fns.D+' · 차용 '+fns.B),
+    h('li',null,'자리바꿈(슬래시 베이스) '+inv+'회'+(inv?' — 베이스 라인을 순차적으로 이어 주는 장치':'')),
+    h('li',null,'확장/색채 화음 '+ext+'회'+(sus?' (sus '+sus+'회 — 해결을 미루는 긴장)':'')),
+    h('li',null,s.sec.length>1?'섹션마다 진행이 달라 곡의 흐름에 따라 화성이 변화합니다. 아래 재현 가이드에서 섹션별 활용을 참고하세요.':'출처에는 한 섹션의 진행만 분석되어 있습니다. 나머지 섹션은 아래 재현 가이드의 제안을 참고하세요.')));
+  // 재현 가이드
+  const F=STYLE_FORM[s.style];
+  body.append(h('div',{class:'warnbox'},'✎ 아래는 ',h('b',null,'장르 관습 기반 재현 가이드'),'입니다. 원곡의 실제 편곡·악기·주법을 분석한 내용이 아니라, 이 곡의 확인된 진행으로 비슷한 스타일의 곡을 만들 때의 프로 워크플로 제안입니다.'),
+    h('h3',null,'✎ 송폼 · 코드 · 주법 · 악기 구성 (재현 가이드)'));
+  const t2=h('table',null,h('tr',null,...['섹션','마디','코드','보이싱','주법','벨로시티','악기 구성','포인트'].map(x=>h('th',null,x))));
+  F.forEach(r=>t2.append(h('tr',null,...r.map((c,i)=>h('td',i===0?{style:'font-weight:800;color:#fff;white-space:nowrap'}:null,c)))));
+  body.append(t2,h('h3',null,'✎ 흐름 설계 포인트'),h('ul',null,
+    h('li',null,'같은 진행이라도 섹션마다 ',h('b',null,'보이싱(넓이) · 주법(리듬 밀도) · 벨로시티(세기)'),'를 바꾸면 곡이 "흘러가는" 느낌이 납니다.'),
+    h('li',null,'브레이크다운은 리듬을 비우고(블록/2분음표) 보이싱을 넓게, 드롭은 리듬을 채우고(오프비트·싱코) 보이싱을 밝고 두껍게.'),
+    h('li',null,'빌드업의 마지막 코드를 sus4로 바꾸면 드롭 첫 코드에서의 해결감이 커집니다.'),
+    h('li',null,'드롭 2에는 드롭 1에 없던 요소 1~2개(카운터 멜로디, 옥타브 업, 차용 화음)를 추가하세요.')),
+    h('div',{class:'btnrow'},h('button',{class:'red',onclick:()=>{ pushUndo(); S.key=key; if(s.bpm) S.bpm=s.bpm; S.slots=songSlots(s,Math.max(0,s.sec.findIndex(x=>/코러스|드롭|인스트루/.test(x.n)))); S.sel=0; S.sync=true; changed({left:true}); syncTop(); showSections(); }},'🏗 이 곡의 진행으로 섹션별 변주 만들기 → 전곡 MIDI')));
+  root.append(toc,body);
+}
+
+/* ============ 섹션별 변주 · FL 드래그 · 주법 편집기 ============ */
+/* ---------- MIDI 공통 ---------- */
+function buildMidi(chordNotes, bassNotes, markers, opts){
+  opts=opts||{}; const us=Math.round(60000000/S.bpm);
+  const meta=[{t:0,o:0,b:[0xFF,0x51,3,(us>>16)&255,(us>>8)&255,us&255]},{t:0,o:1,b:[0xFF,0x58,4,4,2,24,8]},...(markers||[]).map(m=>({t:m.t,o:2,b:[0xFF,0x06,...vlq(enc(m.n).length),...enc(m.n)]}))];
+  const tr=[mtrk(meta)];
+  const mk=(name,list,ch)=>{ const e=[{t:0,o:0,b:[0xFF,0x03,...vlq(enc(name).length),...enc(name)]}]; list.filter(n=>!n.m).forEach(n=>e.push({t:n.s,o:2,b:[0x90|ch,clamp(n.p,0,127),clamp(n.v,1,127)]},{t:n.s+Math.max(2,n.l),o:1,b:[0x80|ch,clamp(n.p,0,127),0]})); return mtrk(e); };
+  if(opts.split){ tr.push(mk('Chords LH',chordNotes.filter(n=>n.role==='lh'),0)); tr.push(mk('Chords RH',chordNotes.filter(n=>n.role!=='lh'),1)); } else tr.push(mk('Chords',chordNotes,0));
+  if(opts.bass&&bassNotes&&bassNotes.length) tr.push(mk('Bass',bassNotes,2));
+  return new Uint8Array([...enc('MThd'),0,0,0,6,0,1,0,tr.length,0,PPQ,...tr.flat()]);
+}
+/* ---------- FL Studio로 드래그 (Chrome/Edge: DownloadURL) ---------- */
+function u8ToDataUrl(u8){ let s=''; for(let i=0;i<u8.length;i+=8192) s+=String.fromCharCode.apply(null,u8.subarray(i,i+8192)); return 'data:audio/midi;base64,'+btoa(s); }
+function dragChip(label,getBytes,getName,hint){
+  const el=h('span',{class:'dragchip',draggable:'true','data-hint':(hint||'')+' — <b>FL Studio 채널 랙/피아노 롤/플레이리스트로 끌어다 놓기</b> (안 되면 바탕화면에 놓은 뒤 FL로 드래그, 또는 클릭해서 저장)'},'⠿ ',label);
+  el.addEventListener('dragstart',e=>{ const name=getName().replace(/[^\w.-]+/g,'_'); const url=u8ToDataUrl(getBytes()); e.dataTransfer.effectAllowed='copy'; e.dataTransfer.setData('DownloadURL','audio/midi:'+name+':'+url); e.dataTransfer.setData('text/uri-list',url); });
+  el.addEventListener('click',()=>{ download(new Blob([getBytes()],{type:'audio/midi'}),getName().replace(/[^\w.-]+/g,'_')); toast('MIDI 저장'); });
+  return el;
+}
+const asciiKey=()=>NOTE_NAMES[S.key.root].replace('#','s')+(S.key.mode==='min'?'m':'');
+const curMidiName=()=>'SINIVURIZER_'+asciiKey()+'_'+S.bpm+'bpm.mid';
+
+/* ---------- 섹션 변주 ---------- */
+const SECTION_DEFS = [
+  {id:'intro',ko:'인트로',reps:2,V:'spread',rhythm:'block',vel:'pad',desc:'와이드 스프레드 패드로 진행을 길게 깔아 공간을 만듦'},
+  {id:'breakdown',ko:'브레이크다운',reps:2,V:'piano',rhythm:'half',vel:'pianist',color:true,desc:'피아노 보이싱 + add9 컬러, 2분음표로 여유 있게 — 테마 소개'},
+  {id:'build',ko:'빌드업',reps:1,V:'standard',rhythm:'quarter',vel:'build',susEnd:true,desc:'4분음표 + 크레센도, 마지막 코드는 sus4로 긴장 유지'},
+  {id:'drop',ko:'드롭',reps:2,V:'supersaw',rhythm:'offbeat',vel:'stab',plain:true,desc:'트라이어드로 단순하게, 탑노트 옥타브 더블 + 오프비트 스탭'},
+  {id:'drop2',ko:'드롭 2',reps:2,V:'doubleOct',rhythm:'synco',vel:'stab',plain:true,borrow:true,desc:'두꺼운 블록 + 3-3-2 싱코, 마지막 코드를 차용 화음으로 바꿔 신선함'},
+  {id:'outro',ko:'아웃트로',reps:1,V:'standard',rhythm:'block',vel:'pad',desc:'스탠다드 보이싱 블록으로 정리'}
+];
+const SONG_FORM=['intro','breakdown','build','drop','breakdown','build','drop2','outro'];
+function variantSlots(def){
+  let sl=JSON.parse(JSON.stringify(S.slots)); const mode=S.key.mode;
+  if(def.plain) sl.forEach(c=>{ c.q={add9:'maj',madd9:'min',maj7:'maj',m7:'min',maj9:'maj',m9:'min','9':'maj','7':'maj',m11:'min','6':'maj',m6:'min',maj7s11:'maj'}[c.q]||c.q; });
+  if(def.color) sl.forEach(c=>{ if(c.q==='maj') c.q='add9'; else if(c.q==='min') c.q='madd9'; });
+  if(def.susEnd&&sl.length){ const l=sl[sl.length-1]; if(['maj','min','add9','madd9'].includes(l.q)) l.q='sus4'; }
+  if(def.borrow&&sl.length){ const l=sl[sl.length-1];
+    if(mode==='min'&&l.r===10){ l.r=7; l.q='maj'; } else if(mode==='min'&&l.r===5&&l.q==='min'){ l.q='maj'; }
+    else if(mode==='maj'&&l.r===5&&l.q==='maj'){ l.q='min'; } else if(mode==='maj'&&l.r===7){ l.q='sus4'; } else if(['maj','min'].includes(l.q)) l.q='sus4'; }
+  sl.forEach(c=>{ c.top=null; c.inv='auto'; });
+  return sl;
+}
+function sectionData(def){
+  const slots=variantSlots(def);
+  const st=Object.assign({},S,{slots,V:Object.assign({},S.V,{style:def.V}),rhythm:def.rhythm,arp:'off',velPreset:def.vel,velCustom:{}});
+  const voiced=voiceProgression(slots,S.key,st.V); const {ev}=buildEvents(st,voiced);
+  const len=slots.reduce((s,x)=>s+x.beats*PPQ,0);
+  let notes=[], bass=[], markers=[];
+  const bv=bassEvents(st,voiced);
+  for(let r=0;r<def.reps;r++){ const o=r*len;
+    notes.push(...ev.map(e=>({p:e.p,s:e.s+o,l:Math.max(4,e.l),v:e.v,role:e.role})));
+    bass.push(...bv.map(b=>({...b,s:b.s+o})));
+    let t=o; slots.forEach((c,i)=>{ markers.push({t,n:voiced[i].name}); t+=c.beats*PPQ; }); }
+  return {def,slots,voiced,notes,bass,markers,len:len*def.reps};
+}
+function playNotesOnce(notes,bass){ ensureAudio(); stopPlay(true); const t0=A.ctx.currentTime+0.08, td=60/S.bpm/PPQ; notes.forEach(n=>playNote(n.p,t0+n.s*td,n.l*td,n.v)); if(S.bassOn&&bass) bass.forEach(b=>playBass(b.p,t0+b.s*td,b.l*td,b.v)); }
+function fullSongData(){
+  let off=0; const notes=[], bass=[], markers=[];
+  SONG_FORM.forEach(id=>{ const d=sectionData(SECTION_DEFS.find(x=>x.id===id)); markers.push({t:off,n:'['+d.def.ko+']'});
+    d.notes.forEach(n=>notes.push({...n,s:n.s+off})); d.bass.forEach(b=>bass.push({...b,s:b.s+off})); d.markers.forEach(m=>markers.push({t:m.t+off,n:m.n})); off+=d.len; });
+  return {notes,bass,markers,len:off};
+}
+function showSections(){
+  if(!S.slots.length) return toast('먼저 코드 진행을 만들어 주세요');
+  const opt={bass:true,split:false};
+  const box=h('div',null,h('h2',null,'🏗 섹션별 코드 진행 변주'),
+    h('p',{class:'guide'},'현재 진행 ('+S._voiced.map(v=>v.name).join(' – ')+')을 곡의 흐름에 맞게 섹션마다 다른 코드 컬러·보이싱·주법·벨로시티로 변주합니다. 각 카드의 ⠿ 칩을 FL Studio로 바로 끌어다 놓을 수 있어요.'),
+    h('div',{class:'chk',style:'gap:14px'},h('label',null,h('input',{type:'checkbox',checked:true,onchange:e=>opt.bass=e.target.checked}),' 베이스 트랙 포함'),h('label',null,h('input',{type:'checkbox',onchange:e=>opt.split=e.target.checked}),' 왼손/오른손 분리')));
+  const grid=h('div',{class:'secgrid'});
+  SECTION_DEFS.forEach(def=>{ const d=sectionData(def);
+    grid.append(h('div',{class:'seccard'},h('div',{class:'row'},h('b',null,def.ko),h('span',{class:'badge'},(d.len/BAR)+'마디')),
+      h('div',{class:'cnames'},d.voiced.map(v=>v.name).join(' – ')),
+      h('div',{class:'sub'},VOICINGS[def.V].ko+' · '+(RHYTHMS[def.rhythm]||{}).ko+' · '+VEL_PRESETS[def.vel].ko),
+      h('p',{class:'guide'},def.desc),
+      h('div',{class:'btnrow'},h('button',{class:'sm',onclick:()=>playNotesOnce(d.notes,d.bass)},'▶ 듣기'),
+        h('button',{class:'sm',onclick:()=>{ pushUndo(); S.slots=d.slots; S.V.style=def.V; S.rhythm=def.rhythm; S.velPreset=def.vel; S.velCustom={}; S.sync=true; closeModal(); setView('lab'); changed({left:true}); syncTop(); renderRight(); toast(def.ko+' 버전을 보이싱 랩으로'); }},'랩에서 편집'),
+        dragChip(def.ko+' MIDI',()=>buildMidi(d.notes,d.bass,d.markers,opt),()=>'SINIVURIZER_'+def.id+'_'+asciiKey()+'.mid','섹션 MIDI'))));
+  });
+  const full=h('div',{class:'card',style:'margin-top:10px'},h('b',null,'🎼 전곡 구성 MIDI'),h('div',{class:'sub'},SONG_FORM.map(id=>SECTION_DEFS.find(x=>x.id===id).ko).join(' → ')+' · 섹션 이름·코드 이름 마커 포함'),
+    h('div',{class:'btnrow'},h('button',{class:'sm',onclick:()=>{ const f=fullSongData(); playNotesOnce(f.notes,f.bass); toast('전곡 미리듣기 (Space로 정지)'); }},'▶ 전곡 듣기'),
+      dragChip('전곡 MIDI',()=>{ const f=fullSongData(); return buildMidi(f.notes,f.bass,f.markers,opt); },()=>'SINIVURIZER_fullsong_'+asciiKey()+'_'+S.bpm+'bpm.mid','전곡 MIDI')));
+  box.append(grid,full,h('div',{class:'btnrow',style:'justify-content:flex-end'},h('button',{onclick:closeModal},'닫기')));
+  openModal(box);
+}
+
+/* ---------- 주법(리듬) 편집기 ---------- */
+function loadCustomRhythms(){ (S.customRhythms||[]).forEach(r=>{ RHYTHMS['c_'+r.id]={ko:'★ '+r.name,r:r.r,bars:r.bars,custom:true}; }); }
+function stepsFromR(R,bars){ const st=new Array(bars*16).fill(0); if(R.whole){ st[0]=1; for(let i=1;i<bars*16;i++) st[i]=2; return st; }
+  const pb=(R.bars||1)*16; for(let b=0;b<bars*16;b+=pb) (R.r||[]).forEach(([s,l])=>{ if(b+s>=st.length) return; st[b+s]=1; for(let k=1;k<l&&b+s+k<st.length;k++) st[b+s+k]=2; }); return st; }
+function rFromSteps(st){ const r=[]; for(let i=0;i<st.length;i++){ if(st[i]===1){ let l=1; while(st[i+l]===2) l++; r.push([i,l]); } } return r; }
+function showRhythmEditor(){
+  const cur=RHYTHMS[S.rhythm]||RHYTHMS.block; let bars=cur.bars||1; let st=stepsFromR(cur,2).slice(0,bars*16); let name=cur.custom?cur.ko.replace('★ ',''):'내 주법 '+((S.customRhythms||[]).length+1);
+  const gridEl=h('div',{class:'rgrid'}); let painting=null;
+  const draw=()=>{ gridEl.innerHTML=''; gridEl.style.gridTemplateColumns=`repeat(${bars*16},1fr)`;
+    st.forEach((v,i)=>{ const c=h('div',{class:'rc'+(v===1?' on':v===2?' tie':'')+(i%4===0?' beat':'')+(i%16===0?' bar':'')});
+      c.addEventListener('pointerdown',e=>{ e.preventDefault(); if(e.shiftKey){ st[i]=st[i]===2?0:2; } else st[i]=st[i]===1?0:1; painting=st[i]; fix(); draw(); });
+      c.addEventListener('pointerenter',e=>{ if(painting!=null&&e.buttons){ st[i]=painting; fix(); draw(); } });
+      gridEl.append(c); });
+    const nums=h('div',{class:'rnums',style:`grid-template-columns:repeat(${bars*16},1fr)`},...st.map((_,i)=>h('span',null,i%4===0?String(Math.floor(i/4)%4+1):''))); gridEl.prepend(nums); };
+  const fix=()=>{ for(let i=0;i<st.length;i++) if(st[i]===2&&(i===0||st[i-1]===0)) st[i]=0; };
+  document.addEventListener('pointerup',()=>painting=null);
+  const preview=()=>{ const vc=S._voiced&&S._voiced[S.sel]; if(!vc) return; ensureAudio(); const r=rFromSteps(st); const t0=A.ctx.currentTime+0.05, td=60/S.bpm/PPQ;
+    for(let rep=0;rep<2;rep++) r.forEach(([s,l])=>vc.notes.forEach(n=>playNote(n.p,t0+(rep*bars*BAR+s*24)*td,l*24*td*0.94,n.role==='top'?108:n.role==='lh'?96:84))); };
+  const startSel=sel3(Object.entries(RHYTHMS).map(([k,v])=>[k,v.ko]),S.rhythm,v=>{ const R=RHYTHMS[v]; bars=R.bars||1; st=stepsFromR(R,bars); draw(); });
+  const nameIn=h('input',{type:'text',value:name,oninput:e=>name=e.target.value,style:'width:200px'});
+  openModal(h('div',null,h('h2',null,'🥁 주법(코드 리듬) 편집기'),
+    h('p',{class:'guide'},'칸 클릭 = 코드 치기 시작 · ',h('b',null,'Shift+클릭'),' = 앞 음을 이어서 길게(타이) · 드래그 = 연속 입력. 숫자는 박(1~4). 저장하면 상단 주법 목록에 ★로 추가됩니다.'),
+    h('div',{class:'btnrow'},h('span',{class:'guide'},'시작 패턴'),startSel,h('span',{class:'guide'},'길이'),
+      sel3([['1','1마디'],['2','2마디']],String(bars),v=>{ const nb=+v; const ns=new Array(nb*16).fill(0); for(let i=0;i<ns.length;i++) ns[i]=st[i%st.length]; st=ns; bars=nb; draw(); }),
+      h('button',{class:'sm',onclick:()=>{ st=st.map(()=>0); draw(); }},'지우기')),
+    gridEl,
+    h('div',{class:'btnrow'},h('span',{class:'guide'},'이름'),nameIn,h('button',{class:'sm',onclick:preview},'▶ 선택 코드로 듣기'),
+      h('button',{class:'pri',onclick:()=>{ const r=rFromSteps(st); if(!r.length) return toast('최소 한 칸은 켜 주세요'); pushUndo(); S.customRhythms=S.customRhythms||[];
+        const ex=cur.custom?S.customRhythms.find(x=>'c_'+x.id===S.rhythm):null; const id=ex?ex.id:Date.now().toString(36);
+        const obj={id,name:name||'내 주법',r,bars}; if(ex) Object.assign(ex,obj); else S.customRhythms.push(obj);
+        loadCustomRhythms(); S.rhythm='c_'+id; refillRhythmSelect(); S.sync=true; changed(); closeModal(); toast('★ 주법 저장: '+obj.name); }},'저장 & 적용'),
+      cur.custom?h('button',{class:'sm red',onclick:()=>{ pushUndo(); S.customRhythms=S.customRhythms.filter(x=>'c_'+x.id!==S.rhythm); delete RHYTHMS[S.rhythm]; S.rhythm='block'; refillRhythmSelect(); changed(); closeModal(); }},'이 주법 삭제'):null,
+      h('button',{onclick:closeModal},'닫기'))));
+  draw();
+}
+function refillRhythmSelect(){ const rh=$('#rhythm'); rh.innerHTML=''; Object.entries(RHYTHMS).forEach(([k,v])=>rh.append(h('option',{value:k,selected:k===S.rhythm},v.ko))); }
+
 const TUT_STEPS=[
  {t:'👋 SINIVURIZER 코드 & 보이싱 랩',c:1,b:'멜로딕 프로그레시브 하우스의 <b>코드 진행</b>과 <b>프로 보이싱</b>, <b>건반 연주 같은 벨로시티</b>에만 집중한 전문 툴입니다.<ul><li><kbd>→</kbd>/<kbd>Enter</kbd> 다음 · <kbd>←</kbd> 이전 · <kbd>Esc</kbd> 종료</li><li>튜토리얼 중에도 강조된 곳을 직접 눌러 볼 수 있어요. <kbd>F1</kbd>로 언제든 다시.</li></ul>'},
- {s:'#views',t:'4개의 화면',b:'<ul><li><b>🎹 보이싱 랩</b> — 코드 진행을 만들고 보이싱·벨로시티를 다듬는 곳</li><li><b>🎼 피아노 롤</b> <kbd>F7</kbd> — FL Studio와 같은 단축키·마우스로 노트를 직접 편집</li><li><b>📘 사운드 가이드북</b> — Sylenth1 · Serum 2 레시피 20종</li><li><b>📗 믹싱·마스터링</b> — FL Studio 프로 테크닉 17장</li></ul>',pre:()=>setView('lab')},
+ {s:'#views',t:'6개의 화면',b:'<ul><li><b>🎹 보이싱 랩</b> — 코드 진행을 만들고 보이싱·벨로시티를 다듬는 곳</li><li><b>🎼 피아노 롤</b> <kbd>F7</kbd> — FL Studio와 같은 단축키·마우스로 노트를 직접 편집 (키 가이드 · 코드톤 가이드 · 스케일 고정)</li><li><b>🎧 명곡 분석</b> — 출처 확인된 유명 곡 24곡의 섹션별 코드 진행 + 송폼·주법·악기 구성 재현 가이드</li><li><b>📘 사운드 가이드북</b> — Sylenth1 · Serum 2 레시피 20종</li><li><b>📙 작편곡 가이드북</b> — 곡 구조 템플릿·빌드업 기법·탑라인 작법 21장</li><li><b>📗 믹싱·마스터링</b> — FL Studio 프로 테크닉 17장</li></ul>',pre:()=>setView('lab')},
  {s:()=>$('#btnPlay').parentElement,t:'재생',b:'<kbd>Space</kbd> 재생/정지(처음으로), <kbd>Ctrl+Space</kbd> 일시정지 — FL Studio와 동일. 진행이 루프로 반복됩니다.'},
  {s:()=>$('#keyRoot').parentElement,t:'키 · 템포',b:'키를 바꾸면 <b>모든 코드가 자동으로 조옮김</b>됩니다 (코드는 키 기준 상대 위치로 저장). 템포는 휠로도 조절.'},
  {s:()=>$('#sound').parentElement,t:'미리듣기 · 주법 · 아르프',b:'<ul><li><b>사운드</b>: 그랜드 피아노풍·일렉 피아노·슈퍼소우·패드·플럭·오르간</li><li><b>주법</b>: 블록, 오프비트, 3-3-2 싱코, 하우스 피아노, 트랜스 게이트 등 12종 — 피아노 롤 노트에 그대로 반영</li><li><b>아르프</b>: 오른손을 아르페지오로</li><li><b>킥</b>을 켜면 사이드체인 펌핑까지 실제 곡처럼 들립니다.</li></ul>'},
@@ -1559,7 +1948,10 @@ const TUT_STEPS=[
  {s:'#right section:nth-of-type(2)',t:'🎯 선택 코드 세부 편집',b:'루트·코드 종류(22종)·<b>슬래시 베이스</b>(C/E 등)·자리바꿈·길이·탑노트 ▲▼·옥타브·<b>코드 강세</b>(클라이맥스 코드를 더 세게).'},
  {s:'#right section:nth-of-type(3)',t:'🎚 벨로시티 휴머나이저',b:'실제 프로 건반 연주자의 터치를 시뮬레이션합니다.<ul><li><b>탑노트 강조</b>: 멜로디를 노래하듯</li><li><b>내성 감쇠</b>: 가운데 음을 부드럽게 → 탁하지 않게</li><li><b>박 강세 · 프레이즈 아크</b>: 4코드 단위로 감정을 쌓고 풀기</li><li><b>휴머나이즈 · 롤 · 타이밍</b>: 손으로 친 듯한 미세한 차이</li></ul>프리셋: 피아니스트 · 드롭 스탭 · 패드 · 그루브 · 빌드업 크레센도 · 플랫'},
  {s:'#views button[data-v=roll]',t:'🎼 피아노 롤 (F7)',pre:()=>setView('roll'),b:'FL Studio 매뉴얼의 피아노 롤 조작을 그대로 따릅니다.<ul><li>도구: <kbd>P</kbd>그리기 <kbd>B</kbd>페인트 <kbd>D</kbd>삭제 <kbd>T</kbd>뮤트 <kbd>C</kbd>슬라이스 <kbd>E</kbd>선택 <kbd>Z</kbd>줌 <kbd>Y</kbd>재생</li><li>우클릭 삭제 · Shift+드래그 복제 · Ctrl+드래그 선택 · 휠클릭 드래그 이동 · Alt 스냅 해제 · Alt+휠 벨로시티 · 더블클릭 노트 속성</li><li><kbd>Ctrl+A/D/C/X/V/B/Q/L/U/G</kbd>, <kbd>Shift+↑↓←→</kbd>, <kbd>Ctrl+↑↓</kbd> 옥타브, <kbd>Alt+화살표</kbd> 미세 이동</li><li><kbd>Alt+S</kbd> 스트럼, <kbd>Alt+R</kbd> 랜덤, <kbd>Alt+X</kbd> 레벨, <kbd>Alt+Q</kbd> 퀀타이즈, <kbd>Alt+M</kbd> 뮤트</li><li><kbd>PgUp/PgDn</kbd> 줌, <kbd>Shift+4</kbd> 전체, <kbd>Shift+5</kbd> 선택 확대, <kbd>Shift+0</kbd> 재생선 중앙, <kbd>Backspace</kbd> 스냅, <kbd>Ctrl+T</kbd> 타이핑 키보드</li></ul>'},
- {s:'#rollBar',t:'동기화와 수동 편집',b:'피아노 롤을 직접 고치면 <b>✎ 수동 편집됨</b>으로 바뀌고, 보이싱 랩 설정이 더 이상 덮어쓰지 않습니다. <b>⟳ 다시 생성</b>으로 언제든 보이싱 랩 기준으로 되돌릴 수 있어요. <kbd>Ctrl+Z</kbd>는 FL처럼 마지막 편집 토글, <kbd>Ctrl+Alt+Z</kbd>는 단계별 실행 취소.'},
+ {s:'#rollBar',t:'키 가이드 · 동기화',b:'<b>🎼 키 가이드</b>: 스케일 음 줄은 초록, 으뜸음은 진하게, 왼쪽 건반에 음 이름+몇 도. <b>🎯 코드톤</b>: 코드 구간마다 구성음 줄을 밝게(빨강 = 코드 루트). 마우스를 올리면 그 칸의 음 이름·도수·코드톤 여부가 뜹니다. <b>🧲 스케일 고정</b>을 켜면 키 밖 음은 자동 보정.<br><br>피아노 롤을 직접 고치면 <b>✎ 수동 편집됨</b>으로 바뀌고, 보이싱 랩 설정이 더 이상 덮어쓰지 않습니다. <b>⟳ 다시 생성</b>으로 언제든 보이싱 랩 기준으로 되돌릴 수 있어요. <kbd>Ctrl+Z</kbd>는 FL처럼 마지막 편집 토글, <kbd>Ctrl+Alt+Z</kbd>는 단계별 실행 취소.'},
+ {s:'#btnRhy',t:'🥁 주법 편집기',pre:()=>setView('lab'),b:'코드를 치는 리듬을 16분 그리드에서 직접 찍어 만듭니다 (1~2마디). 클릭 = 치기, <b>Shift+클릭</b> = 길게 잇기. 저장하면 주법 목록에 ★로 추가돼요.'},
+ {s:'#btnSec',t:'🏗 섹션 변주',b:'지금 진행을 <b>인트로 · 브레이크다운 · 빌드업 · 드롭 · 드롭2 · 아웃트로</b>에 맞게 코드 컬러·보이싱·주법·벨로시티를 바꿔 줍니다. 섹션별 MIDI와 <b>전곡 MIDI</b>(섹션 마커 포함)도 한 번에.'},
+ {s:'#dragTop',t:'⠿ FL로 드래그',b:'이 칩을 <b>FL Studio 창으로 바로 끌어다 놓으면</b> MIDI가 들어갑니다 (Chrome/Edge). 안 되면 바탕화면에 떨군 뒤 FL로 드래그하거나, 칩을 클릭해서 저장하세요.'},
  {s:'#btnExport',t:'⤓ MIDI 내보내기',pre:()=>setView('lab'),b:'피아노 롤의 노트(보이싱·벨로시티·타이밍) 그대로 MIDI로. <b>왼손/오른손 분리</b>를 켜면 왼손은 피아노, 오른손은 슈퍼소우처럼 레이어하기 좋습니다. 코드 이름 마커·베이스 트랙 포함. FL Studio에서 <kbd>Ctrl+M</kbd>으로 가져오세요.'},
  {s:'#views button[data-v=gs]',t:'📘 📗 가이드북',b:'<b>사운드 가이드북</b>: 슈퍼소우 리드·코드 스탭·피아노 플럭·패드·서브·리스·라이저 등 20개 레시피를 Sylenth1과 Serum 2 설정값으로.<br><b>믹싱·마스터링</b>: 게인 스테이징 → FL 라우팅 → 사이드체인 3가지 → EQ 표 → 컴프 → 공간 → 마스터링 체인 → 라우드니스 → 익스포트.'},
  {t:'🎉 준비 완료!',c:1,b:'추천 흐름: <b>라이브러리에서 진행 불러오기 → 보이싱 스타일 고르기 → ↑↓로 탑노트 라인 다듬기 → 벨로시티 프리셋 → 피아노 롤에서 마무리 → MIDI로 FL Studio에</b>.<br><br>사운드는 가이드북의 레시피로 Sylenth1/Serum 2에서 직접 만들어 보세요.'}
